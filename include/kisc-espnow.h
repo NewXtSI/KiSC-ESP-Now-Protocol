@@ -1,5 +1,7 @@
 #ifndef INCLUDE_KISC_ESPNOW_INCLUDED
 #define INCLUDE_KISC_ESPNOW_INCLUDED
 
+bool initESPNow();
+void loopESPNow();
 
 #endif  /* INCLUDE_KISC_ESPNOW_INCLUDED */
