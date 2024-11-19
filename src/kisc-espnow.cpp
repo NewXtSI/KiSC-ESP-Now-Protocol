@@ -27,10 +27,10 @@ void dataSent (uint8_t* address, uint8_t status) {
 
 void dataReceived (uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast) {
     Serial.print ("Received: ");
-    Serial.printf ("%.*s\n", len, data);
-    Serial.printf ("RSSI: %d dBm\n", rssi);
+    Serial.printf ("%.*s ", len, data);
+    Serial.printf ("RSSI: %d dBm ", rssi);
     Serial.printf ("From: " MACSTR "\n", MAC2STR (address));
-    Serial.printf ("%s\n", broadcast ? "Broadcast" : "Unicast");
+//    Serial.printf ("%s\n", broadcast ? "Broadcast" : "Unicast");
 }
 
 bool initESPNow() {
@@ -89,10 +89,9 @@ void sendKiSCWireMessage(kisc::protocol::espnow::KiSCWireMessage message) {
 }
 
 void sendKiSCMessage(uint8_t *targetAddress, kisc::protocol::espnow::KiSCMessage message) {
-
-        kisc::protocol::espnow::KiSCWireMessage wireMessage;
-        memcpy(wireMessage.address, targetAddress, sizeof(wireMessage.address));
-        wireMessage.command = message.command;
-        memcpy(wireMessage.data,message.raw, sizeof(wireMessage.data));
-        sendKiSCWireMessage(wireMessage);
+    kisc::protocol::espnow::KiSCWireMessage wireMessage;
+    memcpy(wireMessage.address, targetAddress, sizeof(wireMessage.address));
+    wireMessage.command = message.command;
+    memcpy(wireMessage.data,message.raw, sizeof(wireMessage.data));
+    sendKiSCWireMessage(wireMessage);
 }
