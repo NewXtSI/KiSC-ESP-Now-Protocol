@@ -40,6 +40,10 @@ bool initESPNow() {
 #elif defined ESP8266
     WiFi.disconnect (false);
 #endif //ESP32
+#ifdef ESP32
+    quickEspNow.setWiFiBandwidth (WIFI_IF_STA, WIFI_BW_HT20); // Only needed for ESP32 in case you need coexistence with ESP8266 in the same network
+#endif //ESP32
+
     quickEspNow.begin (1, 0, false);
     quickEspNow.onDataSent (dataSent);
     quickEspNow.onDataRcvd (dataReceived);
@@ -85,12 +89,10 @@ void sendKiSCWireMessage(kisc::protocol::espnow::KiSCWireMessage message) {
 }
 
 void sendKiSCMessage(uint8_t *targetAddress, kisc::protocol::espnow::KiSCMessage message) {
-    if (ESPNowSent) {
-        ESPNowSent = false;
 
         kisc::protocol::espnow::KiSCWireMessage wireMessage;
         memcpy(wireMessage.address, targetAddress, sizeof(wireMessage.address));
         wireMessage.command = message.command;
         memcpy(wireMessage.data,message.raw, sizeof(wireMessage.data));
-    }
+        sendKiSCWireMessage(wireMessage);
 }
