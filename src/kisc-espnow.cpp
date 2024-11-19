@@ -51,9 +51,6 @@ bool initESPNow() {
     return true;
 }
 
-void loopESPNow() {
-    return;
-}
 
 uint8_t getMessageLength(uint8_t command) {
     switch (command) {
@@ -75,22 +72,46 @@ uint8_t getMessageLength(uint8_t command) {
             return 0;
     }
 }
+
+// create a vector for messages to send via quickEspNow
+// this is needed because the quickEspNow.send() function
+// is blocking and we do not want to block the main loop
+
+std::vector<kisc::protocol::espnow::KiSCWireMessage> messagesToSend;	
+
+// do not send messages directly, push it to a vector
+// and send it in the main loop
 void sendKiSCWireMessage(kisc::protocol::espnow::KiSCWireMessage message) {
+    if (ESPNowSent) {
+        ESPNowSent = false;
         uint8_t buffer[sizeof(message)];
         buffer[0] = message.command;
         memcpy(&buffer[1], &message, sizeof(message));
         uint8_t msgLen;
         msgLen = getMessageLength(message.command)+1;
+
         quickEspNow.send(message.address, message.data, msgLen);
+    }
+}
+
+
+void loopESPNow() {
+    if (ESPNowSent && quickEspNow.readyToSendData()) {
+        if (messagesToSend.size() > 0) {
+            kisc::protocol::espnow::KiSCWireMessage message = messagesToSend.back();
+            messagesToSend.pop_back();
+            sendKiSCWireMessage(message);
+        }
+    }
+    return;
 }
 
 void sendKiSCMessage(uint8_t *targetAddress, kisc::protocol::espnow::KiSCMessage message) {
-    if (ESPNowSent) {
-        ESPNowSent = false;
+
         kisc::protocol::espnow::KiSCWireMessage wireMessage;
         memcpy(wireMessage.address, targetAddress, sizeof(wireMessage.address));
         wireMessage.command = message.command;
         memcpy(wireMessage.data, message.raw, sizeof(wireMessage.data));
-        sendKiSCWireMessage(wireMessage);
-    }
+        messagesToSend.push_back(wireMessage);
+     //   sendKiSCWireMessage(wireMessage
 }
