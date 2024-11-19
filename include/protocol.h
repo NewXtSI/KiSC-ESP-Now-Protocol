@@ -13,9 +13,14 @@ typedef struct {
 } KiSCEmptyMessage;
 
 typedef struct {
+    char value[32];
+} KiSCStringMessage;
+
+typedef struct {
     Command command;
     union {
         KiSCEmptyMessage empty;
+        KiSCStringMessage string;
         uint8_t          raw[MAX_MESSAGE_SIZE];
     };
 } KiSCMessage;

@@ -12,7 +12,10 @@ typedef enum {
     PeriphalFeedback = 21,
     SoundLightControl = 30,
     SoundLightFeedback = 31,
-
+    BTControl = 40,
+    BTFeedback = 41,
+    BTTitle = 42,
+    BTArtist = 43,
 } Command;
 
 }  // namespace espnow

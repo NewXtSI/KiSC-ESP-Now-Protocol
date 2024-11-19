@@ -11,6 +11,7 @@
 #include <QuickEspNow.h>
 #include "../include/kisc-espnow.h"
 
+#include <vector>
 
 KiSCMessageReceivedCallback KiSCReceived_callback = NULL;
 
@@ -30,6 +31,12 @@ void dataReceived (uint8_t* address, uint8_t* data, uint8_t len, signed int rssi
     Serial.printf ("%.*s ", len, data);
     Serial.printf ("RSSI: %d dBm ", rssi);
     Serial.printf ("From: " MACSTR "\n", MAC2STR (address));
+    if (KiSCReceived_callback != NULL) {
+        kisc::protocol::espnow::KiSCMessage message;
+        message.command = kisc::protocol::espnow::Command(data[0]);
+        memcpy(message.raw, &data[1], len-1);
+        KiSCReceived_callback(message);
+    }
 }
 
 bool initESPNow() {
@@ -68,6 +75,14 @@ uint8_t getMessageLength(uint8_t command) {
             return sizeof(kisc::protocol::espnow::KiSCMessage);
         case kisc::protocol::espnow::Command::SoundLightFeedback:
             return sizeof(kisc::protocol::espnow::KiSCMessage);
+        case kisc::protocol::espnow::Command::BTControl:
+            return sizeof(kisc::protocol::espnow::KiSCMessage);
+        case kisc::protocol::espnow::Command::BTFeedback:
+            return sizeof(kisc::protocol::espnow::KiSCMessage);
+        case kisc::protocol::espnow::Command::BTTitle:
+            return sizeof(kisc::protocol::espnow::KiSCStringMessage);
+        case kisc::protocol::espnow::Command::BTArtist:
+            return sizeof(kisc::protocol::espnow::KiSCStringMessage);
         default:
             return 0;
     }
