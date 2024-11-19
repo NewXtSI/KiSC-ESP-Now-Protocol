@@ -16,7 +16,7 @@ typedef struct {
     Command command;
     union {
         KiSCEmptyMessage empty;
-        uint8_t          *raw;
+        uint8_t          raw[MAX_MESSAGE_SIZE];
     };
 } KiSCMessage;
 
