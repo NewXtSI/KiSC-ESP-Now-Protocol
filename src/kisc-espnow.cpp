@@ -81,17 +81,17 @@ uint8_t getMessageLength(uint8_t command) {
         case kisc::protocol::espnow::Command::Ping:
             return sizeof(kisc::protocol::espnow::KiSCEmptyMessage);
         case kisc::protocol::espnow::Command::MotorControl:
-            return sizeof(kisc::protocol::espnow::KiSCMessage);
+            return sizeof(kisc::protocol::espnow::KiSCMotorControlMessage);
         case kisc::protocol::espnow::Command::MotorFeedback:
-            return sizeof(kisc::protocol::espnow::KiSCMessage);
+            return sizeof(kisc::protocol::espnow::KiSCMotorFeedbackMessage);
         case kisc::protocol::espnow::Command::PeriphalControl:
             return sizeof(kisc::protocol::espnow::KiSCPeripheralControlMessage);
         case kisc::protocol::espnow::Command::PeriphalFeedback:
             return sizeof(kisc::protocol::espnow::KiSCPeripheralFeedbackMessage);
         case kisc::protocol::espnow::Command::SoundLightControl:
-            return sizeof(kisc::protocol::espnow::KiSCMessage);
+            return sizeof(kisc::protocol::espnow::KiSCSoundAndLightControlMessage);
         case kisc::protocol::espnow::Command::SoundLightFeedback:
-            return sizeof(kisc::protocol::espnow::KiSCMessage);
+            return sizeof(kisc::protocol::espnow::KiSCSoundAndLightFeedbackMessage);
         case kisc::protocol::espnow::Command::BTControl:
             return sizeof(kisc::protocol::espnow::KiSCMessage);
         case kisc::protocol::espnow::Command::BTFeedback:

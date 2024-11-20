@@ -18,6 +18,14 @@ typedef struct {
 
 typedef struct {
 
+} KiSCMotorControlMessage;
+
+typedef struct {
+
+} KiSCMotorFeedbackMessage;
+
+typedef struct {
+
 } KiSCPeripheralControlMessage;
 
 typedef struct {
@@ -25,12 +33,26 @@ typedef struct {
     bool     motorButton;
 } KiSCPeripheralFeedbackMessage;
 
+typedef struct {
+    bool     motorOn;
+    uint16_t throttle;
+} KiSCSoundAndLightControlMessage;
+
+typedef struct {
+    bool     motorOn;
+    uint16_t throttle;
+} KiSCSoundAndLightFeedbackMessage;
 
 typedef struct {
     Command command;
     union {
         KiSCEmptyMessage empty;
-        KiSCPeripheralFeedbackMessage peripheralFeedback;
+        KiSCMotorControlMessage            motorControl;
+        KiSCMotorFeedbackMessage           motorFeedback;
+        KiSCPeripheralControlMessage        peripheralControl;
+        KiSCPeripheralFeedbackMessage       peripheralFeedback;
+        KiSCSoundAndLightControlMessage     soundAndLightControl;
+        KiSCSoundAndLightFeedbackMessage    soundAndLightFeedback;
         KiSCStringMessage string;
         uint8_t          raw[MAX_MESSAGE_SIZE];
     };
