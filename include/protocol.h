@@ -22,6 +22,7 @@ typedef struct {
 
 typedef struct {
     uint16_t throttle;
+    bool     motorButton;
 } KiSCPeripheralFeedbackMessage;
 
 
