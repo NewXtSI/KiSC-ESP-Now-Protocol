@@ -17,9 +17,19 @@ typedef struct {
 } KiSCStringMessage;
 
 typedef struct {
+
+} KiSCPeripheralControlMessage;
+
+typedef struct {
+    uint16_t throttle;
+} KiSCPeripheralFeedbackMessage;
+
+
+typedef struct {
     Command command;
     union {
         KiSCEmptyMessage empty;
+        KiSCPeripheralFeedbackMessage peripheralFeedback;
         KiSCStringMessage string;
         uint8_t          raw[MAX_MESSAGE_SIZE];
     };

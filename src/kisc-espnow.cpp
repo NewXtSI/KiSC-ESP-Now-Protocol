@@ -85,9 +85,9 @@ uint8_t getMessageLength(uint8_t command) {
         case kisc::protocol::espnow::Command::MotorFeedback:
             return sizeof(kisc::protocol::espnow::KiSCMessage);
         case kisc::protocol::espnow::Command::PeriphalControl:
-            return sizeof(kisc::protocol::espnow::KiSCMessage);
+            return sizeof(kisc::protocol::espnow::KiSCPeripheralControlMessage);
         case kisc::protocol::espnow::Command::PeriphalFeedback:
-            return sizeof(kisc::protocol::espnow::KiSCMessage);
+            return sizeof(kisc::protocol::espnow::KiSCPeripheralFeedbackMessage);
         case kisc::protocol::espnow::Command::SoundLightControl:
             return sizeof(kisc::protocol::espnow::KiSCMessage);
         case kisc::protocol::espnow::Command::SoundLightFeedback:
@@ -116,9 +116,9 @@ std::vector<kisc::protocol::espnow::KiSCWireMessage> messagesToSend;
 void sendKiSCWireMessage(kisc::protocol::espnow::KiSCWireMessage message) {
     if (ESPNowSent) {
         ESPNowSent = false;
-        uint8_t buffer[sizeof(message)];
+        uint8_t buffer[512];
         buffer[0] = message.command;
-        memcpy(&buffer[1], &message, sizeof(message));
+        memcpy(&buffer[1], &message.data, sizeof(message.data));
         uint8_t msgLen;
         msgLen = getMessageLength(message.command)+1;
 
@@ -148,7 +148,16 @@ void sendKiSCMessage(uint8_t *targetAddress, kisc::protocol::espnow::KiSCMessage
         kisc::protocol::espnow::KiSCWireMessage wireMessage;
         memcpy(wireMessage.address, targetAddress, sizeof(wireMessage.address));
         wireMessage.command = message.command;
-        memcpy(wireMessage.data, message.raw, sizeof(wireMessage.data));
+        if (message.command == kisc::protocol::espnow::Command::BTArtist || message.command == kisc::protocol::espnow::Command::BTTitle) {
+            memcpy(wireMessage.data, message.string.value, sizeof(wireMessage.data));
+        } else {
+            if (message.command == kisc::protocol::espnow::Command::PeriphalFeedback) {
+                memcpy(wireMessage.data, &message.peripheralFeedback, sizeof(wireMessage.data));
+            } else {
+                memcpy(wireMessage.data, message.raw, sizeof(wireMessage.data));
+            }
+        }
+//        memcpy(wireMessage.data, message.raw, sizeof(wireMessage.data));
         messagesToSend.push_back(wireMessage);
      //   sendKiSCWireMessage(wireMessage
 }
