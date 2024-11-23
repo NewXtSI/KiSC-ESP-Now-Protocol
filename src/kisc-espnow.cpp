@@ -37,21 +37,24 @@ void dataReceived (uint8_t* address, uint8_t* data, uint8_t len, signed int rssi
     Serial.printf ("RSSI: %d dBm ", rssi);
     Serial.printf ("From: " MACSTR "\n", MAC2STR (address));
 #endif    
-
+#if ESPNOW_DEBUG_SEND_RECEIVE
     Serial.print("RAW: ");
     for (int i = 0; i < len; i++) {
         Serial.printf("%02X ", data[i]);
     }
     Serial.println();
+#endif    
     if (KiSCReceived_callback != NULL) {
         kisc::protocol::espnow::KiSCMessage message;
         message.command = kisc::protocol::espnow::Command(data[0]);
         memcpy(message.raw, &data[1], len-1);
+#if ESPNOW_DEBUG_SEND_RECEIVE        
         Serial.printf("Received message with command %d --> ", message.command);
         for (int i = 0; i < len-1; i++) {
             Serial.printf("%02X ", message.raw[i]);
         }
         Serial.println();
+#endif        
         KiSCReceived_callback(message);
     }
 }
@@ -121,12 +124,13 @@ void sendKiSCWireMessage(kisc::protocol::espnow::KiSCWireMessage message) {
         memcpy(&buffer[1], &message.data, sizeof(message.data));
         uint8_t msgLen;
         msgLen = getMessageLength(message.command)+1;
-
+#if ESPNOW_DEBUG_SEND_RECEIVE
         Serial.print("OUT: ");
         for (int i = 0; i < msgLen; i++) {
             Serial.printf("%02X ", buffer[i]);
         }
         Serial.println();
+#endif        
         quickEspNow.send(message.address, buffer, msgLen);
     }
 }
