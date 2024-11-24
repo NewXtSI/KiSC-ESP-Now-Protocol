@@ -25,41 +25,42 @@ typedef struct {
     uint8_t     mode;
 
     int16_t     pwm;
-    uint8_t     iMotMax = 15;
-    uint16_t    nMotMax = 1000;
-    uint8_t     fieldWeakMax = 10;
-    bool        cruiseCtrlEna = false;
-    int16_t     cruiseMotTgt = 0;
+    uint8_t     iMotMax;
+    uint16_t    nMotMax;
+    uint8_t     fieldWeakMax;
+    bool        cruiseCtrlEna;
+    int16_t     cruiseMotTgt;
 
-    uint8_t     standStillOnHold = 0;
-    uint8_t     electricBrakeFactor = 0; // Rekupationsfaktor 0: keine Rekuperation, 100: maximale Rekuperation
+    uint8_t     standStillOnHold;
+    uint8_t     electricBrakeFactor; // Rekupationsfaktor 0: keine Rekuperation, 100: maximale Rekuperation
 } KiSCMotorControl_Motorsettings;
 
 typedef struct {
     uint8_t     poweroff;
     KiSCMotorControl_Motorsettings left;
     KiSCMotorControl_Motorsettings right;
+
 } KiSCMotorControlMessage;
 
 typedef struct {
-    int16_t   angle = 0;
-    int16_t   speed = 0;
-    uint8_t   error = 0;
-    int16_t   dcLink = 0;
-    int16_t   dcPhaA = 0;
-    int16_t   dcPhaB = 0;
-    int16_t   dcPhaC = 0;
-    uint16_t  chops = 0;
-    int16_t   id = 0;
-    int16_t   iq = 0;
-    bool      hallA = false;
-    bool      hallB = false;
-    bool      hallC = false;
+    int16_t   angle;
+    int16_t   speed;
+    uint8_t   error;
+    int16_t   dcLink;
+    int16_t   dcPhaA;
+    int16_t   dcPhaB;
+    int16_t   dcPhaC;
+    uint16_t  chops;
+    int16_t   id;
+    int16_t   iq;
+    bool      hallA;
+    bool      hallB;
+    bool      hallC;
 } KiSCMotorFeedback_Motorsettings;
 
 typedef struct {
-    int16_t   batVoltage = 0;
-    int16_t   boardTemp = 0;
+    int16_t   batVoltage;
+    int16_t   boardTemp;
     KiSCMotorFeedback_Motorsettings left;
     KiSCMotorFeedback_Motorsettings right;
 } KiSCMotorFeedbackMessage;

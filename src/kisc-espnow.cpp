@@ -153,7 +153,6 @@ void sendKiSCMessage(uint8_t *targetAddress, kisc::protocol::espnow::KiSCMessage
         memcpy(wireMessage.address, targetAddress, sizeof(wireMessage.address));
         wireMessage.command = message.command;
         if (message.command == kisc::protocol::espnow::Command::BTArtist || message.command == kisc::protocol::espnow::Command::BTTitle) {
-            memcpy(wireMessage.data, message.string.value, sizeof(wireMessage.data));
         } else {
             if (message.command == kisc::protocol::espnow::Command::PeriphalFeedback) {
                 memcpy(wireMessage.data, &message.peripheralFeedback, sizeof(wireMessage.data));
