@@ -9,10 +9,12 @@ static uint8_t master[] = { 0xC8, 0xC9, 0xA3, 0xFC, 0x97, 0x54 };
 static uint8_t motor[] = { 0x98, 0xF4, 0xAB, 0xDA, 0xC6, 0x05 };
 static uint8_t sound_light[] = { 0x94, 0x3C, 0xC6, 0x37, 0xAF, 0x44 };
 static uint8_t peripheral[] = { 0x94, 0x3C, 0xC6, 0x37, 0xB3, 0x20 };
+static uint8_t remotecontrol[] = { 0x94, 0x3C, 0xC6, 0x37, 0xB3, 0x20 };
 
 #define MOTOR_CONTROLLER_MAC        motor
 #define MAIN_CONTROLLER_MAC         master
 #define SOUND_LIGHT_CONTROLLER_MAC  sound_light
 #define PERIPHERAL_CONTROLLER_MAC   peripheral
+#define REMOTE_CONTROLLER_MAC       remotecontrol
 
 #endif  /* INCLUDE_MEMBERS_INCLUDED */
