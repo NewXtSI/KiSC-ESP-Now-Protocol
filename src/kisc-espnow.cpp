@@ -140,8 +140,8 @@ void loopESPNow() {
     if (ESPNowSent && quickEspNow.readyToSendData()) {
         if (messagesToSend.size() > 0) {
             kisc::protocol::espnow::KiSCWireMessage message = messagesToSend.front();
-            messagesToSend.erase(messagesToSend.begin());
             sendKiSCWireMessage(message);
+            messagesToSend.erase(messagesToSend.begin());
         }
     }
     return;
@@ -161,7 +161,7 @@ void sendKiSCMessage(uint8_t *targetAddress, kisc::protocol::espnow::KiSCMessage
             }
         }
 //        memcpy(wireMessage.data, message.raw, sizeof(wireMessage.data));
-        if (messagesToSend.size() < 10) {
+        if (messagesToSend.size() < MAX_MESSAGE_STACK) {
             messagesToSend.push_back(wireMessage);
         }
      //   sendKiSCWireMessage(wireMessage

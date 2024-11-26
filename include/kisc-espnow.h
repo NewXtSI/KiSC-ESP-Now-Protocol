@@ -4,6 +4,7 @@
 #include "./protocol.h"
 #include "./members.h"
 
+#define MAX_MESSAGE_STACK   20
 // define a callback funtion, when a KiSCMessage is received
 typedef void (*KiSCMessageReceivedCallback)(kisc::protocol::espnow::KiSCMessage message);
 
