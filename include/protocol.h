@@ -43,19 +43,10 @@ typedef struct {
 } KiSCMotorControlMessage;
 
 typedef struct {
-    int16_t   angle;
+    int16_t   target;
+    
     int16_t   speed;
     uint8_t   error;
-    int16_t   dcLink;
-    int16_t   dcPhaA;
-    int16_t   dcPhaB;
-    int16_t   dcPhaC;
-    uint16_t  chops;
-    int16_t   id;
-    int16_t   iq;
-    bool      hallA;
-    bool      hallB;
-    bool      hallC;
 } KiSCMotorFeedback_Motorsettings;
 
 typedef struct {
