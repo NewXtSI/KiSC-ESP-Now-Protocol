@@ -33,7 +33,7 @@ void dataSent (uint8_t* address, uint8_t status) {
 void dataReceived (uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast) {
 #if ESPNOW_DEBUG_SEND_RECEIVE    
     Serial.print ("Received: ");
-    Serial.printf ("%.*s ", len, data);
+    Serial.printf ("%d ", len );
     Serial.printf ("RSSI: %d dBm ", rssi);
     Serial.printf ("From: " MACSTR "\n", MAC2STR (address));
 #endif    

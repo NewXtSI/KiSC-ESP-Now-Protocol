@@ -44,6 +44,7 @@ typedef struct {
 
 typedef struct {
     int16_t   target;
+    
     int16_t   speed;
     uint8_t   error;
 } KiSCMotorFeedback_Motorsettings;
