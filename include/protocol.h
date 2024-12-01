@@ -52,6 +52,7 @@ typedef struct {
 typedef struct {
     int16_t   batVoltage;
     int16_t   boardTemp;
+    bool      bCharging;
     bool      motorboardConnected;
     KiSCMotorFeedback_Motorsettings left;
     KiSCMotorFeedback_Motorsettings right;
