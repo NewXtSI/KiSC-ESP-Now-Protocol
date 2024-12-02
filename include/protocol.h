@@ -63,9 +63,9 @@ typedef struct {
 } KiSCPeripheralControlMessage;
 
 typedef struct {
-    uint16_t    throttle;
-    uint16_t    brake;
-    int16_t     sttering;
+    uint16_t    throttle;                   // 0 - 1023
+    uint16_t    brake;                      // 0 - 1023
+    int16_t     sttering;                   // -1023 - 1023     // 0 center, -1023 left, 1023 right
     
     bool        motorButton;
     bool        lightButton;
