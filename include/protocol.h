@@ -59,13 +59,15 @@ typedef struct {
 } KiSCMotorFeedbackMessage;
 
 typedef struct {
-
+    int16_t     steering;                   // -1023 - 1023     // 0 center, -1023 left, 1023 right
+    bool        steeringActive;
+    bool        parkingBrakeActive;
 } KiSCPeripheralControlMessage;
 
 typedef struct {
     uint16_t    throttle;                   // 0 - 1023
     uint16_t    brake;                      // 0 - 1023
-    int16_t     sttering;                   // -1023 - 1023     // 0 center, -1023 left, 1023 right
+    int16_t     steering;                   // -1023 - 1023     // 0 center, -1023 left, 1023 right
     
     bool        motorButton;
     bool        lightButton;
@@ -76,6 +78,10 @@ typedef struct {
     bool        indicatorRightButton;
     bool        sirenButton;
     bool        cruiseControlButton;
+
+    int16_t     ypr[3];
+    int16_t     acc[3];
+
 } KiSCPeripheralFeedbackMessage;
 
 typedef struct {
