@@ -65,6 +65,43 @@ typedef struct {
 } KiSCPeripheralControlMessage;
 
 typedef struct {
+    uint8_t     leds;
+    uint16_t     rumbledelay;
+    uint16_t    rumbleduration;
+    uint16_t    rumbleweakMagnitude;
+    uint16_t    rumblestrongMagnitude;
+} KiSCRemoteControlMessage;
+
+   // DPAD hoch: Gang hoch
+    // DPAD runter: Gang runter
+    // Linker Stick: Lenkung
+    // Rechter Stick: Gas/Bremse
+    // Y: Motor an/aus
+    // o: Cruise control
+
+    // L: Blinker links
+    // R: Blinker rechts
+    
+typedef struct {
+    uint16_t    throttle;                   // 0 - 1023
+    uint16_t    brake;                      // 0 - 1023
+    int16_t     steering;                   // -1023 - 1023     // 0 center, -1023 left, 1023 right
+
+    bool        motorButton;
+    bool        lightButton;
+    bool        hornButton;
+    bool        gearUpButton;
+    bool        gearDownButton;
+    bool        indicatorLeftButton;
+    bool        indicatorRightButton;
+    bool        sirenButton;
+    bool        cruiseControlButton;
+
+    bool        controllerConnected;
+    uint8_t     batteryLevel;
+} KiSCRemoteFeedbackMessage;
+
+typedef struct {
     uint16_t    throttle;                   // 0 - 1023
     uint16_t    brake;                      // 0 - 1023
     int16_t     steering;                   // -1023 - 1023     // 0 center, -1023 left, 1023 right
@@ -130,6 +167,8 @@ typedef struct {
         KiSCPeripheralFeedbackMessage       peripheralFeedback;
         KiSCSoundAndLightControlMessage     soundAndLightControl;
         KiSCSoundAndLightFeedbackMessage    soundAndLightFeedback;
+        KiSCRemoteControlMessage            remoteControl;
+        KiSCRemoteFeedbackMessage           remoteFeedback;
 //        KiSCStringMessage string;
         uint8_t          raw[MAX_MESSAGE_SIZE];
     };

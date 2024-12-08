@@ -16,6 +16,8 @@ typedef enum {
     BTFeedback = 41,
     BTTitle = 42,
     BTArtist = 43,
+    RemoteControl = 50,
+    RemoteFeedback = 51,
 } Command;
 
 }  // namespace espnow
