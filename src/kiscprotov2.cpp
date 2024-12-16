@@ -14,7 +14,17 @@
 #include <QuickEspNow.h>
 
 KiSCProtoV2::KiSCProtoV2(String name, KiSCPeer::Role role) : name(name), role(role) {
-    
+
+}
+
+void
+KiSCProtoV2::dataSent(uint8_t* address, uint8_t status) {
+
+}
+
+void
+KiSCProtoV2::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast) {
+
 }
 
 bool KiSCProtoV2::init() {
