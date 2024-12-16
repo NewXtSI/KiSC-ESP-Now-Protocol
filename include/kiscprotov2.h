@@ -20,7 +20,7 @@ class KiSCProtoV2Message {
 
 class KiSCPeer {
  public:
-    enum SlaveType { Unidentified, Controller, Motor, Light, Sound, BT, Display, Peripheral };
+    enum SlaveType { Unidentified, Controller, Motor, Light, Sound, BTAudio, Display, Peripheral };
     enum Role { Master, Slave };
     enum State { Unknown, Idle, Running, Stopped };
 
