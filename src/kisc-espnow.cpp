@@ -1,3 +1,4 @@
+#if 0
 #include <Arduino.h>
 #if defined ESP32
 #include <WiFi.h>
@@ -166,3 +167,4 @@ void sendKiSCMessage(uint8_t *targetAddress, kisc::protocol::espnow::KiSCMessage
         }
      //   sendKiSCWireMessage(wireMessage
 }
+#endif
