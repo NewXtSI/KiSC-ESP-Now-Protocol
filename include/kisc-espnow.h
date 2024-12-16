@@ -1,6 +1,9 @@
 #ifndef INCLUDE_KISC_ESPNOW_INCLUDED
 #define INCLUDE_KISC_ESPNOW_INCLUDED
 
+#error "This file is not ready for use"
+#error "Please switch to kiscprotov2.h"
+
 #include "./protocol.h"
 #include "./members.h"
 

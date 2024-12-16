@@ -1,6 +1,9 @@
 #include <Arduino.h>
 #include "../include/kiscprotov2.h"
 
+#define ESP32DEBUGGING
+#include <ESP32Logger.h>
+
 #if defined ESP32
 #include <WiFi.h>
 #include <esp_wifi.h>
@@ -15,13 +18,15 @@ KiSCProtoV2::KiSCProtoV2(String name, KiSCPeer::Role role) : name(name), role(ro
 }
 
 bool KiSCProtoV2::init() {
-    WiFi.mode(WIFI_MODE_STA);
-    WiFi.disconnect(false, true);
-    quickEspNow.setWiFiBandwidth(WIFI_IF_STA, WIFI_BW_HT20);
+    if (state == KiSCPeer::Unknown) {
+        WiFi.mode(WIFI_MODE_STA);
+        WiFi.disconnect(false, true);
+        quickEspNow.setWiFiBandwidth(WIFI_IF_STA, WIFI_BW_HT20);
 
-    quickEspNow.begin(1, 0, false);
-    quickEspNow.onDataSent(KiSCProtoV2::dataSent);
-    quickEspNow.onDataRcvd(KiSCProtoV2::dataReceived);
+        quickEspNow.begin(1, 0, false);
+        quickEspNow.onDataSent(KiSCProtoV2::dataSent);
+        quickEspNow.onDataRcvd(KiSCProtoV2::dataReceived);
+    }
     return true;
 }
 

@@ -75,7 +75,8 @@ class KiSCProtoV2Master : public KiSCProtoV2 {
 
 class KiSCProtoV2Slave : public KiSCProtoV2 {
  public:
-    explicit KiSCProtoV2Slave(String name) : KiSCProtoV2(name, KiSCPeer::Slave) {}
+    explicit                KiSCProtoV2Slave(String name) : KiSCProtoV2(name, KiSCPeer::Slave) {}
+    void                    setType(KiSCPeer::SlaveType type) { this->type = type; }
  private:
     KiSCPeer::SlaveType     type = KiSCPeer::Unidentified;
     bool                    masterFound = false;
