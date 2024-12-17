@@ -31,6 +31,8 @@ class KiSCAddress {
     KiSCAddress(const KiSCAddress& other) : address() { memcpy(this->address, other.address, 6); }
     uint8_t* getAddress() { return address; }
     uint8_t address[6];
+
+    bool operator==(const KiSCAddress& other) const;    
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -132,6 +134,7 @@ class KiSCProtoV2Master : public KiSCProtoV2 {
     virtual void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer = true);
     void                    addSlave(KiSCPeer slave) { slaves.push_back(slave); }
     void                    taskTick1s();
+    bool                    canAdd(KiSCPeer slave);
  private:
     bool                    broadcastActive;
     uint32_t                broadcastStart;
@@ -197,8 +200,14 @@ class KiSCProtoV2Message_network : public KiSCProtoV2Message {
     void                setLeaveRequest() { subCommand = 0x12; }
     void                setAcceptResponse() { subCommand = 0x13; }
     void                setRejectResponse() { subCommand = 0x14; }
+    void                setName(String name) { this->name = name; }
+    void                setType(KiSCPeer::SlaveType type) { this->type = type; }
+    String               getName() { return name; }
+      KiSCPeer::SlaveType getType() { return type; }
  private:
     uint8_t             subCommand = 0x00;
+    String              name;
+    KiSCPeer::SlaveType type;
 };
 //extern KiSCProtoV2 *kiscprotoV2;
 

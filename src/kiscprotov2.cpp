@@ -55,13 +55,6 @@ KiSCProtoV2::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed i
 
     KiSCProtoV2Message *kiscmsg = buildProtoMessage(msg);
     if (kiscmsg != nullptr) {
-        DBGLOG(Verbose, "Message built (type: %02X)", kiscmsg->getCommand());
-        char line[255];
-        sprintf(line, "Payload: %d", msg.payload_len);
-        for (int i=0; i<msg.payload_len; i++) {
-            sprintf(line, "%s %02X", line, msg.payload[i]);
-        }
-        DBGLOG(Verbose, line);
         kiscprotoV2->messageReceived(kiscmsg, rssi, broadcast);
     } else {
         char line[255];
@@ -118,12 +111,10 @@ KiSCProtoV2::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broa
 
     if (msg->getCommand() == MSGTYPE_INFO) {
 //    if (msg->isA<KiSCProtoV2Message_Info>()) {
-        DBGLOG(Verbose, "Building info messages");
         KiSCProtoV2Message_Info* infoMsg = dynamic_cast<KiSCProtoV2Message_Info*>(msg);
         infoMsg->dump();
     } else if ((msg->getCommand() == MSGTYPE_NETWORK) || (msg->getCommand() == MSGTYPE_NETWORK_JOIN) || (msg->getCommand() == MSGTYPE_NETWORK_LEAVE) || (msg->getCommand() == MSGTYPE_NETWORK_ACCEPT) || (msg->getCommand() == MSGTYPE_NETWORK_REJECT)) {
 //    } else if (msg->isA<KiSCProtoV2Message_network>()) {
-        DBGLOG(Verbose, "Building network messages");
         KiSCProtoV2Message_network* networkMsg = dynamic_cast<KiSCProtoV2Message_network*>(msg);
         networkMsg->dump();
     } else {
@@ -239,6 +230,11 @@ void
 KiSCProtoV2::taskTick1s() {
     DBGLOG(Debug, "KiSCProtoV2.taskTick1s()");
 }
+bool KiSCAddress::operator==(const KiSCAddress& other) const {
+
+    return memcmp(address, other.address, sizeof(address)) == 0;
+
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // KiSCProtoV2Message
@@ -284,16 +280,20 @@ KiSCProtoV2Slave::KiSCProtoV2Slave(String name) : KiSCProtoV2(name, KiSCPeer::Sl
 void
 KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer) {
     KiSCProtoV2::messageReceived(msg, rssi, broadcast, false);
+    if ((!broadcast) && (msg->getSource() == master.address)) {
+        master.lastMsg = millis();
+    }
     DBGLOG(Info, "KiSCProtoV2Slave.messageReceived");
     if (msg->getCommand() == MSGTYPE_INFO) {
 //    if (msg->isA<KiSCProtoV2Message_Info>()) {
-        DBGLOG(Verbose, "Information message");
         KiSCProtoV2Message_Info* infoMsg = dynamic_cast<KiSCProtoV2Message_Info*>(msg);
         if (!(dynamic_cast<KiSCProtoV2Slave*>(kiscprotoV2))->isMasterFound()) {
             if (infoMsg->getRole() == KiSCPeer::Role::Master) {
                 // Send join Request
                 KiSCProtoV2Message_network joinMsg(infoMsg->getSource().getAddress());
                 joinMsg.setJoinRequest();
+                joinMsg.setName(name);
+                joinMsg,setType(type);
                 kiscprotoV2->send(&joinMsg);
                 DBGLOG(Info, "Join request sent to %02X %02X %02X %02X %02X %02X", infoMsg->getSource().getAddress()[0], infoMsg->getSource().getAddress()[1], infoMsg->getSource().getAddress()[2], infoMsg->getSource().getAddress()[3], infoMsg->getSource().getAddress()[4], infoMsg->getSource().getAddress()[5]);
             } else {
@@ -304,12 +304,16 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
         } else {
             if (infoMsg->getRole() == KiSCPeer::Role::Master) {
                 DBGLOG(Info, "Master name setting to: %s", infoMsg->getName().c_str());
-                (dynamic_cast<KiSCProtoV2Slave*>(kiscprotoV2))->getMaster()->name = infoMsg->getName();
+                if (infoMsg->getName() != master.name) {
+                    DBGLOG(Info, "Master name changed to: %s", infoMsg->getName().c_str());
+                    master.name = infoMsg->getName();
+                }
+//                (dynamic_cast<KiSCProtoV2Slave*>(kiscprotoV2))->getMaster()->name = infoMsg->getName();
             }
         }
     } else if ((msg->getCommand() == MSGTYPE_NETWORK) || (msg->getCommand() == MSGTYPE_NETWORK_JOIN) || (msg->getCommand() == MSGTYPE_NETWORK_LEAVE) || (msg->getCommand() == MSGTYPE_NETWORK_ACCEPT) || (msg->getCommand() == MSGTYPE_NETWORK_REJECT)) {
 //    } else if (msg->isA<KiSCProtoV2Message_network>()) {
-        DBGLOG(Verbose, "Network message");
+//        DBGLOG(Verbose, "Network message");
         KiSCProtoV2Message_network* networkMsg = dynamic_cast<KiSCProtoV2Message_network*>(msg);
         if (networkMsg->getSubCommand() == MSGTYPE_NETWORK_ACCEPT) {
             if (!(dynamic_cast<KiSCProtoV2Slave*>(kiscprotoV2))->isMasterFound()) {
@@ -342,7 +346,17 @@ KiSCProtoV2Slave::taskTick1s() {
         if (millis() - master.lastMsg > 5000) {
             DBGLOG(Warning, "Master not responding");
             masterFound = false;
+        } else {
+            KiSCProtoV2Message_Info msg(master.address.getAddress());
+            msg.setName(name);
+            msg.setRole(role);
+            msg.setState(state);
+            msg.setType(type);
+
+            send(&msg);
+
         }
+
     }
 }
 
@@ -373,7 +387,23 @@ KiSCProtoV2Master::KiSCProtoV2Master(String name) : KiSCProtoV2(name, KiSCPeer::
 void
 KiSCProtoV2Master::taskTick1s() {
     KiSCProtoV2::taskTick1s();
-    // Check for offline peers
+    // Send heartbeat to all active slaves
+    for (KiSCPeer slave : slaves) {
+        if (millis() - slave.lastMsg > 5000) {
+            slave.active = false;
+        }
+        if (slave.active) {
+            KiSCProtoV2Message_Info msg(slave.address.getAddress());
+            msg.setName(name);
+            msg.setRole(role);
+            msg.setState(state);
+            msg.setType(KiSCPeer::SlaveType::Unidentified);
+            send(&msg);
+        }
+    }
+    // Check for offline peers and remove them
+    slaves.erase(std::remove_if(slaves.begin(), slaves.end(), [](KiSCPeer slave) { return !slave.active; }), slaves.end());
+
     // Turn off broadcast after 3 sek
     if (millis() - broadcastStart > 3000) {
         broadcastActive = false;
@@ -388,6 +418,17 @@ KiSCProtoV2Master::taskTick500ms() {
     }
 }
 
+bool
+KiSCProtoV2Master::canAdd(KiSCPeer slave) {
+    // Check existing slaves, if a slave of the given type is already there. If so, reject the new slave
+    for (KiSCPeer _slave : slaves) {
+        if (_slave.type == slave.type) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void
 KiSCProtoV2Master::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer) {
     DBGLOG(Debug, "KiSCProtoV2Master.messageReceived()");
@@ -396,6 +437,14 @@ KiSCProtoV2Master::messageReceived(KiSCProtoV2Message* msg, signed int rssi, boo
         DBGLOG(Info, "Broadcast message received, enabling broadcast announcements");
         broadcastActive = true;
         broadcastStart = millis();
+    } else {
+        // Check, if peer exists, than update the last Msg time
+        for (KiSCPeer slave : slaves) {
+            if (slave.address == msg->getSource()) {
+                slave.lastMsg = millis();
+                slave.active = true;
+            }
+        }
     }
     if (msg->getCommand() == MSGTYPE_INFO) {
 //    if (msg->isA<KiSCProtoV2Message_Info>()) {
@@ -407,12 +456,18 @@ KiSCProtoV2Master::messageReceived(KiSCProtoV2Message* msg, signed int rssi, boo
         KiSCProtoV2Message_network* networkMsg = dynamic_cast<KiSCProtoV2Message_network*>(msg);
         if (networkMsg->getSubCommand() == MSGTYPE_NETWORK_JOIN) {
             DBGLOG(Info, "KiSCProtoV2Master.messageReceived: Join Request from %02X %02X %02X %02X %02X %02X", msg->getSource().getAddress()[0], msg->getSource().getAddress()[1], msg->getSource().getAddress()[2], msg->getSource().getAddress()[3], msg->getSource().getAddress()[4], msg->getSource().getAddress()[5]);
+            KiSCProtoV2Message_network acceptMsg(msg->getSource().getAddress());
             KiSCPeer _slave;
+            _slave.name = networkMsg->getName();
+            _slave.type = networkMsg->getType();
             _slave.address = networkMsg->getSource();
             _slave.lastMsg = millis();
-            dynamic_cast<KiSCProtoV2Master*>(kiscprotoV2)->addSlave(_slave);
-            KiSCProtoV2Message_network acceptMsg(msg->getSource().getAddress());
-            acceptMsg.setAcceptResponse();
+            if (canAdd(_slave)) {
+                dynamic_cast<KiSCProtoV2Master*>(kiscprotoV2)->addSlave(_slave);
+                acceptMsg.setAcceptResponse();
+            } else {
+                acceptMsg.setRejectResponse();
+            }
             kiscprotoV2->send(&acceptMsg);
         }
     } else {
@@ -441,6 +496,7 @@ KiSCProtoV2Master::sendBroadcastOffer() {
 KiSCProtoV2Message_Info::KiSCProtoV2Message_Info(uint8_t address[]) : KiSCProtoV2Message(address) {
     DBGLOG(Debug, "KiSCProtoV2Message_Info()");
 }
+
 void KiSCProtoV2Message_Info::buildBufferedMessage() {
     DBGLOG(Debug, "KiSCProtoV2Message_Info.buildBufferedMessage()");
 //    KiSCProtoV2Message::buildBufferedMessage();
@@ -536,6 +592,7 @@ KiSCProtoV2Message_network::buildBufferedMessage() {
     msg.payload[2] = subCommand;
     msg.payload_len = 3;
 }
+
 void
 KiSCProtoV2Message_network::dump() {
     DBGLOG(Verbose, "  SubCommand: %d", subCommand);
