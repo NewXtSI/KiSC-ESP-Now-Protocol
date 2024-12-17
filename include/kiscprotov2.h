@@ -10,7 +10,7 @@
 
 typedef struct {
     uint8_t dstAddress[6]; /**< Message topic*/
-    uint8_t payload[128*4]; /**< Message payload*/
+    uint8_t payload[128*2]; /**< Message payload*/
     size_t payload_len; /**< Payload length*/
 } espnowmsg_t;
 
@@ -28,7 +28,7 @@ class KiSCAddress {
         this->address[5] = f;
     }
     KiSCAddress(const KiSCAddress& other) : address() { memcpy(this->address, other.address, 6); }
-
+    uint8_t* getAddress() { return address; }
     uint8_t address[6];
 };
 
@@ -85,6 +85,9 @@ class KiSCProtoV2 {
 
     static void         task(void* param);
     void                send(KiSCProtoV2Message msg);
+    void                taskTick100ms();
+    virtual void                taskTick500ms();
+    void                taskTick1s();
  private:
     static QueueHandle_t  sendQueue;
 
@@ -103,10 +106,12 @@ class KiSCProtoV2 {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class KiSCProtoV2Master : public KiSCProtoV2 {
  public:
-    explicit KiSCProtoV2Master(String name);
+    explicit                KiSCProtoV2Master(String name);
+    void                    taskTick500ms(); 
  private:
-    void sendBroadcastOffer();
-    std::vector<KiSCPeer>  slaves;
+    bool                    broadcastActive;
+    void                    sendBroadcastOffer();
+    std::vector<KiSCPeer>   slaves;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

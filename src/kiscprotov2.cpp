@@ -13,8 +13,8 @@
 
 #include <QuickEspNow.h>
 
-bool KiSCProtoV2::ESPNowSent = false;
-QueueHandle_t KiSCProtoV2::sendQueue = xQueueCreate(ESPNOW_QUEUE_SIZE, sizeof(espnowmsg_t));
+bool KiSCProtoV2::ESPNowSent = true;
+QueueHandle_t KiSCProtoV2::sendQueue = nullptr	;
 
 KiSCAddress BroadcastAddress(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
@@ -34,6 +34,9 @@ KiSCProtoV2::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed i
 }
 
 bool KiSCProtoV2::init() {
+    if (sendQueue == nullptr) {
+        sendQueue = xQueueCreate(queueSize, sizeof(espnowmsg_t));
+    }
     DBGLOG(Info, "Initializing ESPNow");
     if (state == KiSCPeer::Unknown) {
         WiFi.mode(WIFI_MODE_STA);
@@ -51,6 +54,10 @@ bool KiSCProtoV2::init() {
 
 void
 KiSCProtoV2::task(void* param) {
+    KiSCProtoV2* proto = (KiSCProtoV2*)param;
+    uint32_t last100ms = millis();
+    uint32_t last500ms = millis();
+    uint32_t last1s = millis();
     DBGLOG(Info, "Starting KiSCCommTask");
     for (;;) {
         if (ESPNowSent) {
@@ -59,6 +66,22 @@ KiSCProtoV2::task(void* param) {
                 _sendViaESPNow(msg);
             }
         }
+        // run 100ms tick every 100ms
+        if (millis() - last100ms > 100) {
+            proto->taskTick100ms();
+            last100ms = millis();
+        }
+        // run 500ms tick every 500ms
+        if (millis() - last500ms > 500) {
+            proto->taskTick500ms();
+            last500ms = millis();
+        }
+        // run 1s tick every 1s
+        if (millis() - last1s > 1000) {
+            proto->taskTick1s();
+            last1s = millis();
+        }
+
         vTaskDelay(1);
     }
     vTaskDelete(NULL);
@@ -71,7 +94,7 @@ KiSCProtoV2::start() {
     if (init()) {
         state = KiSCPeer::Idle;
         ESPNowSent = true;
-        xTaskCreate(task, "KiSCCommTast", 4096, NULL, 0, NULL);
+        xTaskCreate(task, "KiSCCommTast", 1024*6, this, 0, NULL);
     } else {
         DBGLOG(Error, "Failed to initialize ESPNow");
     }
@@ -80,19 +103,35 @@ KiSCProtoV2::start() {
 void
 KiSCProtoV2::send(KiSCProtoV2Message msg) {
     DBGLOG(Debug, "KiSCProtoV2.send()");
-    if (queueSize > uxQueueSpacesAvailable(sendQueue)) {
-        DBGLOG(Warning, "Send queue full");
+    if (xQueueSend(sendQueue, msg.getBufferedMessage(), 0) == pdTRUE) {
+        DBGLOG(Debug, "Message queued");
     } else {
-        DBGLOG(Debug, "Pushing to queue...");
-        xQueueSend(sendQueue, msg.getBufferedMessage(), 0);
+        DBGLOG(Warning, "Failed to queue message");
     }
+
 }
 
 void
 KiSCProtoV2::_sendViaESPNow(espnowmsg_t msg) {
     DBGLOG(Debug, "KiSCProtoV2._sendViaESPNow");
+    ESPNowSent = false;
+    quickEspNow.send(msg.dstAddress, msg.payload, msg.payload_len);
 }
 
+void                
+KiSCProtoV2::taskTick100ms() {
+//    DBGLOG(Debug, "KiSCProtoV2.taskTick100ms()");
+}
+
+void
+KiSCProtoV2::taskTick500ms() {
+    DBGLOG(Debug, "KiSCProtoV2.taskTick500ms()");
+}
+
+void
+KiSCProtoV2::taskTick1s() {
+    DBGLOG(Debug, "KiSCProtoV2.taskTick1s()");
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // KiSCProtoV2Message
@@ -131,4 +170,20 @@ KiSCProtoV2Slave::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, sig
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 KiSCProtoV2Master::KiSCProtoV2Master(String name) : KiSCProtoV2(name, KiSCPeer::Master) {
     DBGLOG(Debug, "KiSCProtoV2Master()");
+    broadcastActive = true;
+}
+
+void                    
+KiSCProtoV2Master::taskTick500ms() {
+    DBGLOG(Debug, "KiSCProtoV2Master.taskTick500ms()");
+    if (broadcastActive) {
+        sendBroadcastOffer();
+    }
+}
+
+void
+KiSCProtoV2Master::sendBroadcastOffer() {
+    KiSCProtoV2Message msg(BroadcastAddress.getAddress());
+    DBGLOG(Debug, "KiSCProtoV2Master.sendBroadcastOffer()");
+    send(msg);
 }
