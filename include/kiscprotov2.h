@@ -102,7 +102,7 @@ class KiSCProtoV2 {
     static void         dataSent(uint8_t* address, uint8_t status);
     static void         dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast);
 
-    static void         messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
+    virtual void         messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
     static void         task(void* param);
     KiSCAddress         getAddress() { return address; }
     static KiSCProtoV2Message* buildProtoMessage(espnowmsg_t msg);
@@ -131,7 +131,7 @@ class KiSCProtoV2Master : public KiSCProtoV2 {
  public:
     explicit                KiSCProtoV2Master(String name);
     void                    taskTick500ms(); 
-    static void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
+    virtual void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
     void                    addSlave(KiSCPeer slave) { slaves.push_back(slave); }
  private:
     bool                    broadcastActive;
@@ -145,7 +145,7 @@ class KiSCProtoV2Slave : public KiSCProtoV2 {
     explicit                KiSCProtoV2Slave(String name);
     void                    setType(KiSCPeer::SlaveType type) { this->type = type; }
     void                    taskTick500ms();
-    static void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
+    virtual void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
     void                   setMaster(KiSCPeer master) { this->master = master; }
     KiSCPeer*               getMaster() { return &master; }
     bool                    isMasterFound() { return masterFound; }
@@ -174,7 +174,7 @@ class KiSCProtoV2Message_Info : public KiSCProtoV2Message {
     KiSCPeer::State     getState() { return state; }
     KiSCPeer::SlaveType getType() { return type; }
 
-    static void         messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
+    virtual void         messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
  private:
     String              name;
     KiSCPeer::Role      role;

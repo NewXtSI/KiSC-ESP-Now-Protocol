@@ -56,7 +56,7 @@ KiSCProtoV2::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed i
     KiSCProtoV2Message *kiscmsg = buildProtoMessage(msg);
     if (kiscmsg != nullptr) {
         DBGLOG(Debug, "KiSCProtoV2.dataReceived: Message built");
-        messageReceived(kiscmsg, rssi, broadcast);
+        kiscprotoV2->messageReceived(kiscmsg, rssi, broadcast);
     } else {
         char line[255];
         sprintf(line, "Payload: %d", msg.payload_len);
@@ -274,9 +274,10 @@ KiSCProtoV2Slave::KiSCProtoV2Slave(String name) : KiSCProtoV2(name, KiSCPeer::Sl
 
 void
 KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast) {
-    DBGLOG(Debug, "KiSCProtoV2Slave.messageReceived");
     KiSCProtoV2::messageReceived(msg, rssi, broadcast);
+    DBGLOG(Info, "KiSCProtoV2Slave.messageReceived");
     if (msg->isA<KiSCProtoV2Message_Info>()) {
+        DBGLOG(Verbose, "Information message");
         KiSCProtoV2Message_Info* infoMsg = dynamic_cast<KiSCProtoV2Message_Info*>(msg);
         if (!(dynamic_cast<KiSCProtoV2Slave*>(kiscprotoV2))->isMasterFound()) {
             if (infoMsg->getRole() == KiSCPeer::Role::Master) {
@@ -285,15 +286,19 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
                 joinMsg.setJoinRequest();
                 kiscprotoV2->send(&joinMsg);
                 DBGLOG(Info, "Join request sent to %02X %02X %02X %02X %02X %02X", infoMsg->getSource().getAddress()[0], infoMsg->getSource().getAddress()[1], infoMsg->getSource().getAddress()[2], infoMsg->getSource().getAddress()[3], infoMsg->getSource().getAddress()[4], infoMsg->getSource().getAddress()[5]);
+            } else {
+                DBGLOG(Warning, "No master, but no master in message");
             }
 //            masterFound = true;
 //            master = KiSCPeer(infoMsg->source, infoMsg->name, infoMsg->role, infoMsg->state, infoMsg->type);
         } else {
             if (infoMsg->getRole() == KiSCPeer::Role::Master) {
+                DBGLOG(Info, "Master name setting to: %s", infoMsg->getName().c_str());
                 (dynamic_cast<KiSCProtoV2Slave*>(kiscprotoV2))->getMaster()->name = infoMsg->getName();
             }
         }
     } else if (msg->isA<KiSCProtoV2Message_network>()) {
+        DBGLOG(Verbose, "Network message");
         KiSCProtoV2Message_network* networkMsg = dynamic_cast<KiSCProtoV2Message_network*>(msg);
         if (networkMsg->getSubCommand() == MSGTYPE_NETWORK_ACCEPT) {
             if (!(dynamic_cast<KiSCProtoV2Slave*>(kiscprotoV2))->isMasterFound()) {
@@ -303,6 +308,8 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
                 dynamic_cast<KiSCProtoV2Slave*>(kiscprotoV2)->setMaster(_master);
             }
         }
+    } else {
+        DBGLOG(Warning, "Unknown message type");
     }
 }
 
