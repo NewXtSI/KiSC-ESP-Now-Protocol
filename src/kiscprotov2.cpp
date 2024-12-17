@@ -316,6 +316,8 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
                 DBGLOG(Info, "KiSCProtoV2Slave.messageReceived: Accept Response from %02X %02X %02X %02X %02X %02X", msg->getSource().getAddress()[0], msg->getSource().getAddress()[1], msg->getSource().getAddress()[2], msg->getSource().getAddress()[3], msg->getSource().getAddress()[4], msg->getSource().getAddress()[5]);
                 KiSCPeer _master;
                 _master.address = networkMsg->getSource();
+                _master.lastMsg = millis();
+                _master.active = true;
                 dynamic_cast<KiSCProtoV2Slave*>(kiscprotoV2)->setMaster(_master);
             }
         }
@@ -330,6 +332,18 @@ void
 KiSCProtoV2Slave::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast) {
     KiSCProtoV2::dataReceived(address, data, len, rssi, broadcast);
     DBGLOG(Debug, "KiSCProtoV2Slave::dataReceived");
+}
+
+void
+KiSCProtoV2Slave::taskTick1s() {
+    KiSCProtoV2::taskTick1s();
+    DBGLOG(Debug, "KiSCProtoV2Slave.taskTick1s()");
+    if (masterFound) {
+        if (millis() - master.lastMsg > 5000) {
+            DBGLOG(Warning, "Master not responding");
+            masterFound = false;
+        }
+    }
 }
 
 void
@@ -353,6 +367,17 @@ KiSCProtoV2Slave::taskTick500ms() {
 KiSCProtoV2Master::KiSCProtoV2Master(String name) : KiSCProtoV2(name, KiSCPeer::Master) {
     DBGLOG(Debug, "KiSCProtoV2Master( %s )", name.c_str());
     broadcastActive = true;
+    broadcastStart = millis();
+}
+
+void
+KiSCProtoV2Master::taskTick1s() {
+    KiSCProtoV2::taskTick1s();
+    // Check for offline peers
+    // Turn off broadcast after 3 sek
+    if (millis() - broadcastStart > 3000) {
+        broadcastActive = false;
+    }
 }
 
 void
@@ -367,6 +392,11 @@ void
 KiSCProtoV2Master::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer) {
     DBGLOG(Debug, "KiSCProtoV2Master.messageReceived()");
     KiSCProtoV2::messageReceived(msg, rssi, broadcast, false);
+    if (broadcast) {
+        DBGLOG(Info, "Broadcast message received, enabling broadcast announcements");
+        broadcastActive = true;
+        broadcastStart = millis();
+    }
     if (msg->getCommand() == MSGTYPE_INFO) {
 //    if (msg->isA<KiSCProtoV2Message_Info>()) {
         KiSCProtoV2Message_Info* infoMsg = dynamic_cast<KiSCProtoV2Message_Info*>(msg);

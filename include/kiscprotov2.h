@@ -131,8 +131,10 @@ class KiSCProtoV2Master : public KiSCProtoV2 {
     void                    taskTick500ms(); 
     virtual void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer = true);
     void                    addSlave(KiSCPeer slave) { slaves.push_back(slave); }
+    void                    taskTick1s();
  private:
     bool                    broadcastActive;
+    uint32_t                broadcastStart;
     void                    sendBroadcastOffer();
     std::vector<KiSCPeer>   slaves;
 };
@@ -143,8 +145,9 @@ class KiSCProtoV2Slave : public KiSCProtoV2 {
     explicit                KiSCProtoV2Slave(String name);
     void                    setType(KiSCPeer::SlaveType type) { this->type = type; }
     void                    taskTick500ms();
+    void                    taskTick1s();
     virtual void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer = true);
-    void                   setMaster(KiSCPeer master) { this->master = master; }
+    void                   setMaster(KiSCPeer master) { this->master = master; masterFound = true; }
     KiSCPeer*               getMaster() { return &master; }
     bool                    isMasterFound() { return masterFound; }
  protected:
