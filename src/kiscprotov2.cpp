@@ -276,6 +276,7 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
                 KiSCProtoV2Message_network joinMsg(infoMsg->getSource().getAddress());
                 joinMsg.setJoinRequest();
                 kiscprotoV2->send(&joinMsg);
+                DBGLOG(Info, "Join request sent to %02X %02X %02X %02X %02X %02X", infoMsg->getSource().getAddress()[0], infoMsg->getSource().getAddress()[1], infoMsg->getSource().getAddress()[2], infoMsg->getSource().getAddress()[3], infoMsg->getSource().getAddress()[4], infoMsg->getSource().getAddress()[5]);
             }
 //            masterFound = true;
 //            master = KiSCPeer(infoMsg->source, infoMsg->name, infoMsg->role, infoMsg->state, infoMsg->type);
@@ -288,6 +289,7 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
         KiSCProtoV2Message_network* networkMsg = dynamic_cast<KiSCProtoV2Message_network*>(msg);
         if (networkMsg->getSubCommand() == MSGTYPE_NETWORK_ACCEPT) {
             if (!(dynamic_cast<KiSCProtoV2Slave*>(kiscprotoV2))->isMasterFound()) {
+                DBGLOG(Info, "KiSCProtoV2Slave.messageReceived: Accept Response from %02X %02X %02X %02X %02X %02X", msg->getSource().getAddress()[0], msg->getSource().getAddress()[1], msg->getSource().getAddress()[2], msg->getSource().getAddress()[3], msg->getSource().getAddress()[4], msg->getSource().getAddress()[5]);
                 KiSCPeer _master;
                 _master.address = networkMsg->getSource();
                 dynamic_cast<KiSCProtoV2Slave*>(kiscprotoV2)->setMaster(_master);
@@ -344,8 +346,10 @@ KiSCProtoV2Master::messageReceived(KiSCProtoV2Message* msg, signed int rssi, boo
     } else if (msg->isA<KiSCProtoV2Message_network>()) {
         KiSCProtoV2Message_network* networkMsg = dynamic_cast<KiSCProtoV2Message_network*>(msg);
         if (networkMsg->getSubCommand() == MSGTYPE_NETWORK_JOIN) {
+            DBGLOG(Info, "KiSCProtoV2Master.messageReceived: Join Request from %02X %02X %02X %02X %02X %02X", msg->getSource().getAddress()[0], msg->getSource().getAddress()[1], msg->getSource().getAddress()[2], msg->getSource().getAddress()[3], msg->getSource().getAddress()[4], msg->getSource().getAddress()[5]);
             KiSCPeer _slave;
             _slave.address = networkMsg->getSource();
+            _slave.lastMsg = millis();
             dynamic_cast<KiSCProtoV2Master*>(kiscprotoV2)->addSlave(_slave);
             KiSCProtoV2Message_network acceptMsg(msg->getSource().getAddress());
             acceptMsg.setAcceptResponse();
