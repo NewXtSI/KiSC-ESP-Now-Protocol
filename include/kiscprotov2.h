@@ -169,6 +169,18 @@ class KiSCProtoV2Message_Info : public KiSCProtoV2Message {
     KiSCPeer::SlaveType type;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class KiSCProtoV2Message_network : public KiSCProtoV2Message {
+ public:
+                        KiSCProtoV2Message_network(uint8_t address[]);
+
+    virtual bool        buildFromBuffer();
+    void                buildBufferedMessage() override;
+    virtual void        dump();
+    void                setSubCommand(uint8_t subCommand) { this->subCommand = subCommand; }
+ private:
+    uint8_t             subCommand = MSGTYPE_NETWORK;      
+};
 //extern KiSCProtoV2 *kiscprotoV2;
 
 #endif  /* INCLUDE_KISCPROTOV2_INCLUDED */

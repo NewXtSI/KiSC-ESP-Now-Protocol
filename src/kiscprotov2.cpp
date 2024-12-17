@@ -20,7 +20,12 @@ KiSCAddress BroadcastAddress(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
 #define PROTO_VERSION   0x20
 
-#define MSGTYPE_INFO    0x01
+#define MSGTYPE_INFO            0x01
+#define MSGTYPE_NETWORK         0x10
+#define MSGTYPE_NETWORK_JOIN    0x11
+#define MSGTYPE_NETWORK_LEAVE   0x12
+#define MSGTYPE_NETWORK_ACCEPT  0x13
+#define MSGTYPE_NETWORK_REJECT  0x14
 
 KiSCProtoV2 *kiscprotoV2;
 
@@ -76,6 +81,16 @@ KiSCProtoV2::buildProtoMessage(espnowmsg_t msg) {
             delete kiscmsg;
             return nullptr;
         }
+    } else if ((msgType == MSGTYPE_NETWORK) || (msgType == MSGTYPE_NETWORK_JOIN) || (msgType == MSGTYPE_NETWORK_LEAVE) || (msgType == MSGTYPE_NETWORK_ACCEPT) || (msgType == MSGTYPE_NETWORK_REJECT)) {
+        KiSCProtoV2Message_network *kiscmsg = new KiSCProtoV2Message_network(msg.srcAddress);
+        kiscmsg->setBufferedMessage(&msg);
+        if (kiscmsg->buildFromBuffer()) {
+            return kiscmsg;
+        } else {
+            DBGLOG(Error, "Failed to build message from buffer");
+            delete kiscmsg;
+            return nullptr;
+        }
     } else {
         DBGLOG(Error, "Unsupported message type %d", msgType);
     }
@@ -91,6 +106,12 @@ KiSCProtoV2::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broa
         DBGLOG(Debug, "KiSCProtoV2Message_Info");
         KiSCProtoV2Message_Info* infoMsg = dynamic_cast<KiSCProtoV2Message_Info*>(msg);
         infoMsg->dump();
+    } else if (msg->isA<KiSCProtoV2Message_network>()) {
+        DBGLOG(Debug, "KiSCProtoV2Message_network");
+        KiSCProtoV2Message_network* networkMsg = dynamic_cast<KiSCProtoV2Message_network*>(msg);
+        networkMsg->dump();
+    } else {
+        DBGLOG(Error, "Unknown message type");
     }
 
     delete msg;
@@ -372,5 +393,30 @@ KiSCProtoV2Message_Info::dump() {
     DBGLOG(Debug, "  Name: %s", name.c_str());
     DBGLOG(Debug, "  Role: %d", role);
     DBGLOG(Debug, "  State: %d", state);
+}
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// KiSCProtoV2Message_network
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+KiSCProtoV2Message_network::KiSCProtoV2Message_network(uint8_t address[]) : KiSCProtoV2Message(address) {
+    DBGLOG(Debug, "KiSCProtoV2Message_network()");
+}
+
+bool        
+KiSCProtoV2Message_network::buildFromBuffer() {
+    DBGLOG(Debug, "KiSCProtoV2Message_network.buildFromBuffer()");
+    return true;
+}
+void                
+KiSCProtoV2Message_network::buildBufferedMessage() {
+    DBGLOG(Debug, "KiSCProtoV2Message_network.buildBufferedMessage()");
+    KiSCProtoV2Message::buildBufferedMessage();
+    msg.payload[1] = subCommand;
+    msg.payload_len = 2;
+}
+void        
+KiSCProtoV2Message_network::dump() {
+    DBGLOG(Debug, "KiSCProtoV2Message_network.dump()");
 }
