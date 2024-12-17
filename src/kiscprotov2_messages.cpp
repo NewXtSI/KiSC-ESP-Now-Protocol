@@ -145,3 +145,52 @@ KiSCProtoV2Message_network::dump() {
 
 //    DBGLOG(Debug, "KiSCProtoV2Message_network.dump()");
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// KiSCProtoV2Message_BTAudio
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+KiSCProtoV2Message_BTAudio::KiSCProtoV2Message_BTAudio(uint8_t address[]) : KiSCProtoV2Message(address) {
+    DBGLOG(Debug, "KiSCProtoV2Message_BTAudio");
+}
+
+bool        
+KiSCProtoV2Message_BTAudio::buildFromBuffer() {
+    DBGLOG(Debug, "try to build");
+    KiSCProtoV2Message::buildFromBuffer();
+    if (msg.payload_len < 2) {
+        return false;
+    }
+    if ((msg.payload[1] != MSGTYPE_BT_AUDIO) && (msg.payload[1] != MSGTYPE_BT_AUDIO_INFO) && (msg.payload[1] != MSGTYPE_BT_AUDIO_CONTROL)) {
+        return false;
+    }
+    subCommand = msg.payload[2];
+    return true;
+}
+
+void                
+KiSCProtoV2Message_BTAudio::buildBufferedMessage() {
+    DBGLOG(Debug, "KiSCProtoV2Message_BTAudio.buildBufferedMessage()");
+    KiSCProtoV2Message::buildBufferedMessage();
+    memcpy(msg.dstAddress, target.getAddress(), sizeof(msg.dstAddress));
+    msg.payload[0] = PROTO_VERSION;
+    msg.payload[1] = MSGTYPE_BT_AUDIO;
+    msg.payload[2] = subCommand;
+    msg.payload_len = 3;
+}
+
+void        
+KiSCProtoV2Message_BTAudio::dump() {
+    switch (subCommand) {
+        case MSGTYPE_BT_AUDIO_INFO:
+            DBGLOG(Verbose, "BT Audio Info");
+            break;
+        case MSGTYPE_BT_AUDIO_CTRL:
+            DBGLOG(Verbose, "BT Audio Control");
+            break;
+        default:
+            DBGLOG(Verbose, "Unknown BT Audio message");
+            break;
+    }
+}

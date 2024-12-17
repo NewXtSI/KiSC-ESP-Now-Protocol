@@ -142,6 +142,10 @@ KiSCProtoV2::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broa
 //    } else if (msg->isA<KiSCProtoV2Message_network>()) {
         KiSCProtoV2Message_network* networkMsg = dynamic_cast<KiSCProtoV2Message_network*>(msg);
         networkMsg->dump();
+    } else if (msg->getCommand() == MSGTYPE_BT_AUDIO) {
+//    } else if (msg->isA<KiSCProtoV2Message_BTAudio>()) {
+        KiSCProtoV2Message_BTAudio* btAudioMsg = dynamic_cast<KiSCProtoV2Message_BTAudio*>(msg);
+        btAudioMsg->dump();
     } else {
         DBGLOG(Error, "Unknown message type");
     }

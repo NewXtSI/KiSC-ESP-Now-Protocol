@@ -59,6 +59,7 @@ class KiSCProtoV2Message {
 
     friend class KiSCProtoV2Message_Info;
     friend class KiSCProtoV2Message_network;
+    friend class KiSCProtoV2Message_BTAudio;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -211,6 +212,19 @@ class KiSCProtoV2Message_network : public KiSCProtoV2Message {
     String              name;
     KiSCPeer::SlaveType type;
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class KiSCProtoV2Message_BTAudio : public KiSCProtoV2Message {
+ public:
+                        KiSCProtoV2Message_BTAudio(uint8_t address[]);
+
+    virtual bool        buildFromBuffer();
+    void                buildBufferedMessage() override;
+    virtual void        dump();
+ private:
+    uint8_t             subCommand = 0x20;
+};
+
 //extern KiSCProtoV2 *kiscprotoV2;
 
 #define PROTO_VERSION   0x20
@@ -222,5 +236,8 @@ class KiSCProtoV2Message_network : public KiSCProtoV2Message {
 #define MSGTYPE_NETWORK_ACCEPT  0x13
 #define MSGTYPE_NETWORK_REJECT  0x14
 
+#define MSGTYPE_BT_AUDIO        0x20
+#define MSGTYPE_BT_AUDIO_INFO   0x21
+#define MSGTYPE_BT_AUDIO_CTRL   0x22
 
 #endif  /* INCLUDE_KISCPROTOV2_INCLUDED */
