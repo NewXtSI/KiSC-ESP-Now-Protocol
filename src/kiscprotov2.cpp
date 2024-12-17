@@ -391,8 +391,10 @@ KiSCProtoV2Master::taskTick1s() {
     for (KiSCPeer slave : slaves) {
         if (millis() - slave.lastMsg > 5000) {
             slave.active = false;
+            DBGLOG(Warning, "Slave %02X %02X %02X %02X %02X %02X not responding", slave.address.getAddress()[0], slave.address.getAddress()[1], slave.address.getAddress()[2], slave.address.getAddress()[3], slave.address.getAddress()[4], slave.address.getAddress()[5]);
         }
         if (slave.active) {
+            DBGLOG(Verbose, "Pinging %02X %02X %02X %02X %02X %02X", slave.address.getAddress()[0], slave.address.getAddress()[1], slave.address.getAddress()[2], slave.address.getAddress()[3], slave.address.getAddress()[4], slave.address.getAddress()[5]);
             KiSCProtoV2Message_Info msg(slave.address.getAddress());
             msg.setName(name);
             msg.setRole(role);
@@ -406,6 +408,9 @@ KiSCProtoV2Master::taskTick1s() {
 
     // Turn off broadcast after 3 sek
     if (millis() - broadcastStart > 3000) {
+        if (broadcastActive) {
+            DBGLOG(Info, "Broadcast timeout, disabling broadcast announcements");
+        }
         broadcastActive = false;
     }
 }
