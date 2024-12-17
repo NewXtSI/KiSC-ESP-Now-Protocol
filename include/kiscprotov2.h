@@ -14,8 +14,8 @@ class KiSCAddress {
 
 class KiSCProtoV2Message {
  public:
+    KiSCProtoV2Message(uint8_t* address[], uint8_t* data, uint8_t len);
     KiSCAddress     target;
-
 };
 
 class KiSCPeer {
@@ -55,9 +55,12 @@ class KiSCProtoV2 {
     static void         dataSent(uint8_t* address, uint8_t status);
     static void         dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast);
 
+    static void         task(void* param);
     void                send(KiSCProtoV2Message msg);
  private:
     void                _sendViaESPNow(KiSCProtoV2Message msg);
+
+    static bool         ESPNowSent;
 
     KiSCPeer            peer;
     rcvdMsgCallback     rcvdMsg = nullptr;
@@ -77,6 +80,8 @@ class KiSCProtoV2Slave : public KiSCProtoV2 {
  public:
     explicit                KiSCProtoV2Slave(String name) : KiSCProtoV2(name, KiSCPeer::Slave) {}
     void                    setType(KiSCPeer::SlaveType type) { this->type = type; }
+ protected:
+    static void             dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast);
  private:
     KiSCPeer::SlaveType     type = KiSCPeer::Unidentified;
     bool                    masterFound = false;
