@@ -8,16 +8,43 @@
 
 #include <vector>
 
+typedef struct {
+    uint8_t dstAddress[6]; /**< Message topic*/
+    uint8_t payload[128*4]; /**< Message payload*/
+    size_t payload_len; /**< Payload length*/
+} espnowmsg_t;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class KiSCAddress {
+ public:
+    KiSCAddress() : address() {}
+    KiSCAddress(uint8_t* address) : address() { memcpy(this->address, address, 6); }
+    KiSCAddress(uint8_t a, uint8_t b, uint8_t c, uint8_t d, uint8_t e, uint8_t f) : address() {
+        this->address[0] = a;
+        this->address[1] = b;
+        this->address[2] = c;
+        this->address[3] = d;
+        this->address[4] = e;
+        this->address[5] = f;
+    }
+    KiSCAddress(const KiSCAddress& other) : address() { memcpy(this->address, other.address, 6); }
+
     uint8_t address[6];
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class KiSCProtoV2Message {
  public:
-    KiSCProtoV2Message(uint8_t* address[], uint8_t* data, uint8_t len);
+    KiSCProtoV2Message(uint8_t address[]);
+    espnowmsg_t*    getBufferedMessage() { buildBufferedMessage(); return &msg; }
+ private:
+    void            buildBufferedMessage();
+    espnowmsg_t     msg;
+   
     KiSCAddress     target;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class KiSCPeer {
  public:
     enum SlaveType { Unidentified, Controller, Motor, Light, Sound, BTAudio, Display, Peripheral };
@@ -40,6 +67,7 @@ class KiSCPeer {
 
 typedef std::function<void (KiSCAddress address, KiSCProtoV2Message msg, signed int rssi, bool broadcast)> rcvdMsgCallback;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class KiSCProtoV2 {
  public:
                         KiSCProtoV2(String name, KiSCPeer::Role role);
@@ -58,10 +86,13 @@ class KiSCProtoV2 {
     static void         task(void* param);
     void                send(KiSCProtoV2Message msg);
  private:
-    void                _sendViaESPNow(KiSCProtoV2Message msg);
+    static QueueHandle_t  sendQueue;
+
+    static void         _sendViaESPNow(espnowmsg_t msg);
 
     static bool         ESPNowSent;
 
+    const uint8_t       queueSize = 10;
     KiSCPeer            peer;
     rcvdMsgCallback     rcvdMsg = nullptr;
     KiSCPeer::State     state = KiSCPeer::Unknown;
@@ -69,16 +100,19 @@ class KiSCProtoV2 {
     KiSCPeer::Role      role;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class KiSCProtoV2Master : public KiSCProtoV2 {
  public:
-    explicit KiSCProtoV2Master(String name) : KiSCProtoV2(name, KiSCPeer::Master) {}
+    explicit KiSCProtoV2Master(String name);
  private:
+    void sendBroadcastOffer();
     std::vector<KiSCPeer>  slaves;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class KiSCProtoV2Slave : public KiSCProtoV2 {
  public:
-    explicit                KiSCProtoV2Slave(String name) : KiSCProtoV2(name, KiSCPeer::Slave) {}
+    explicit                KiSCProtoV2Slave(String name);
     void                    setType(KiSCPeer::SlaveType type) { this->type = type; }
  protected:
     static void             dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast);
