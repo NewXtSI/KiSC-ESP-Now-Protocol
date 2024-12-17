@@ -112,7 +112,7 @@ KiSCProtoV2::buildProtoMessage(espnowmsg_t msg) {
 }
 
 void         
-KiSCProtoV2::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast) {
+KiSCProtoV2::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer) {
     DBGLOG(Debug, "KiSCProtoV2.messageReceived");
     msg->buildFromBuffer();
 
@@ -129,8 +129,8 @@ KiSCProtoV2::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broa
     } else {
         DBGLOG(Error, "Unknown message type");
     }
-
-    delete msg;
+    if (delBuffer)
+        delete msg;
 }
 
 bool 
@@ -282,8 +282,8 @@ KiSCProtoV2Slave::KiSCProtoV2Slave(String name) : KiSCProtoV2(name, KiSCPeer::Sl
 }
 
 void
-KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast) {
-    KiSCProtoV2::messageReceived(msg, rssi, broadcast);
+KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer) {
+    KiSCProtoV2::messageReceived(msg, rssi, broadcast, false);
     DBGLOG(Info, "KiSCProtoV2Slave.messageReceived");
     if (msg->getCommand() == MSGTYPE_INFO) {
 //    if (msg->isA<KiSCProtoV2Message_Info>()) {
@@ -320,8 +320,10 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
             }
         }
     } else {
-        DBGLOG(Warning, "Unknown message type");
+        DBGLOG(Warning, "Unknown message type %02X", msg->getCommand());
     }
+    if (delBuffer)
+        delete msg;
 }
 
 void
@@ -362,9 +364,9 @@ KiSCProtoV2Master::taskTick500ms() {
 }
 
 void
-KiSCProtoV2Master::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast) {
+KiSCProtoV2Master::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer) {
     DBGLOG(Debug, "KiSCProtoV2Master.messageReceived()");
-    KiSCProtoV2::messageReceived(msg, rssi, broadcast);
+    KiSCProtoV2::messageReceived(msg, rssi, broadcast, false);
     if (msg->getCommand() == MSGTYPE_INFO) {
 //    if (msg->isA<KiSCProtoV2Message_Info>()) {
         KiSCProtoV2Message_Info* infoMsg = dynamic_cast<KiSCProtoV2Message_Info*>(msg);
@@ -383,7 +385,11 @@ KiSCProtoV2Master::messageReceived(KiSCProtoV2Message* msg, signed int rssi, boo
             acceptMsg.setAcceptResponse();
             kiscprotoV2->send(&acceptMsg);
         }
+    } else {
+        DBGLOG(Warning, "Unknown message type %02X", msg->getCommand());
     }
+    if (delBuffer)
+        delete msg;
 }
 
 void
