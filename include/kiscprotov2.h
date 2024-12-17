@@ -10,6 +10,7 @@
 
 typedef struct {
     uint8_t dstAddress[6]; /**< Message topic*/
+    uint8_t srcAddress[6]; /**< Message topic*/
     uint8_t payload[128*2]; /**< Message payload*/
     size_t payload_len; /**< Payload length*/
 } espnowmsg_t;
@@ -37,11 +38,18 @@ class KiSCProtoV2Message {
  public:
     KiSCProtoV2Message(uint8_t address[]);
     espnowmsg_t*    getBufferedMessage() { buildBufferedMessage(); return &msg; }
+    void            setBufferedMessage(espnowmsg_t* msg) { memcpy(&this->msg, msg, sizeof(espnowmsg_t)); }
+    virtual void    buildFromBuffer();
+    template<typename T>
+        bool isA() {
+            return (dynamic_cast<T*>(this) != NULL);
+        }    
  private:
     void            buildBufferedMessage();
     espnowmsg_t     msg;
    
     KiSCAddress     target;
+    KiSCAddress     source;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,11 +91,13 @@ class KiSCProtoV2 {
     static void         dataSent(uint8_t* address, uint8_t status);
     static void         dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast);
 
+    static void         messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
     static void         task(void* param);
     void                send(KiSCProtoV2Message msg);
-    void                taskTick100ms();
+    static KiSCProtoV2Message* buildProtoMessage(espnowmsg_t msg);
+    virtual void                taskTick100ms();
     virtual void                taskTick500ms();
-    void                taskTick1s();
+    virtual void                taskTick1s();
  private:
     static QueueHandle_t  sendQueue;
 

@@ -31,9 +31,32 @@ KiSCProtoV2::dataSent(uint8_t* address, uint8_t status) {
 void
 KiSCProtoV2::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast) {
     DBGLOG(Debug, "KiSCProtoV2.dataReceived %d, Broadcast: %d", len, broadcast);
+    espnowmsg_t msg;
+    memcpy(msg.srcAddress, address, sizeof(msg.srcAddress));
+    memcpy(msg.payload, data, len);
+    msg.payload_len = len;
+
+    KiSCProtoV2Message *kiscmsg = buildProtoMessage(msg);
+    if (kiscmsg != nullptr) {
+        messageReceived(kiscmsg, rssi, broadcast);
+    }
 }
 
-bool KiSCProtoV2::init() {
+KiSCProtoV2Message* 
+KiSCProtoV2::buildProtoMessage(espnowmsg_t msg) {
+    KiSCProtoV2Message *kiscmsg = new KiSCProtoV2Message(msg.dstAddress);
+    return kiscmsg;
+}
+
+void         
+KiSCProtoV2::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast) {
+    DBGLOG(Debug, "KiSCProtoV2.messageReceived");
+
+    delete msg;
+}
+
+bool 
+KiSCProtoV2::init() {
     if (sendQueue == nullptr) {
         sendQueue = xQueueCreate(queueSize, sizeof(espnowmsg_t));
     }
@@ -43,7 +66,7 @@ bool KiSCProtoV2::init() {
         WiFi.disconnect(false, true);
         quickEspNow.setWiFiBandwidth(WIFI_IF_STA, WIFI_BW_HT20);
 
-        quickEspNow.begin(1, 0, false);
+        quickEspNow.begin(2, 0, false);
         quickEspNow.onDataSent(KiSCProtoV2::dataSent);
         quickEspNow.onDataRcvd(KiSCProtoV2::dataReceived);
     } else {
@@ -145,6 +168,15 @@ KiSCProtoV2Message::KiSCProtoV2Message(uint8_t address[]) {
 void            
 KiSCProtoV2Message::buildBufferedMessage() {
     DBGLOG(Debug, "KiSCProtoV2Message.buildBufferedMessage()");
+    memcpy(msg.dstAddress, target.getAddress(), sizeof(msg.dstAddress));
+    memset(msg.payload, 0, sizeof(msg.payload));
+    msg.payload_len = 0;
+}
+
+void
+KiSCProtoV2Message::buildFromBuffer() {
+    DBGLOG(Debug, "KiSCProtoV2Message.buildFromBuffer()");
+    memcpy(target.getAddress(), msg.dstAddress, sizeof(msg.dstAddress));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
