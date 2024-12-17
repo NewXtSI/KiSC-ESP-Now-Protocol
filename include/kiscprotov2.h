@@ -68,6 +68,7 @@ class KiSCPeer {
     enum Role { Master, Slave };
     enum State { Unknown, Idle, Running, Stopped };
 
+    KiSCPeer(const KiSCPeer& other) : address(other.address), lastMsg(other.lastMsg), active(other.active), name(other.name), role(other.role), state(other.state), type(other.type) {}
     KiSCPeer() : address(), lastMsg(0), active(false), name(), role(Master), state(Unknown), type(Unidentified) {}
     KiSCPeer(KiSCAddress address, String name, Role role, State state, SlaveType type) : address(address), lastMsg(0),
             active(false), name(name), role(role), state(state), type(type) {}
@@ -113,6 +114,7 @@ class KiSCProtoV2 {
     String              name;
     KiSCPeer::State     state = KiSCPeer::Unknown;
     KiSCPeer::Role      role;
+    SemaphoreHandle_t   mutex;
  private:
     static QueueHandle_t  sendQueue;
 
@@ -132,7 +134,7 @@ class KiSCProtoV2Master : public KiSCProtoV2 {
     explicit                KiSCProtoV2Master(String name);
     void                    taskTick500ms(); 
     virtual void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer = true);
-    void                    addSlave(KiSCPeer slave) { slaves.push_back(slave); }
+    void                    addSlave(KiSCPeer slave);
     void                    taskTick1s();
     bool                    canAdd(KiSCPeer slave);
  private:
