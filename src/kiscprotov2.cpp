@@ -13,19 +13,10 @@
 
 #include <QuickEspNow.h>
 
-bool KiSCProtoV2::ESPNowSent = true;
-QueueHandle_t KiSCProtoV2::sendQueue = nullptr	;
-
 KiSCAddress BroadcastAddress(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
-#define PROTO_VERSION   0x20
-
-#define MSGTYPE_INFO            0x01
-#define MSGTYPE_NETWORK         0x10
-#define MSGTYPE_NETWORK_JOIN    0x11
-#define MSGTYPE_NETWORK_LEAVE   0x12
-#define MSGTYPE_NETWORK_ACCEPT  0x13
-#define MSGTYPE_NETWORK_REJECT  0x14
+bool KiSCProtoV2::ESPNowSent = true;
+QueueHandle_t KiSCProtoV2::sendQueue = nullptr	;
 
 KiSCProtoV2 *kiscprotoV2;
 
@@ -56,7 +47,7 @@ void hexdump(void *ptr, int buflen, bool in) {
     for (j=0; j<16; j++) 
       if (i+j < buflen)
         sprintf(line,"%s%c", line,isprint(buf[i+j]) ? buf[i+j] : '.');
-     DBGLOG(Info, line);
+     DBGLOG(Debug, line);
   }
 }
 
@@ -337,7 +328,6 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
 //            master = KiSCPeer(infoMsg->source, infoMsg->name, infoMsg->role, infoMsg->state, infoMsg->type);
         } else {
             if (infoMsg->getRole() == KiSCPeer::Role::Master) {
-                DBGLOG(Info, "Master name setting to: %s", infoMsg->getName().c_str());
                 if (infoMsg->getName() != master.name) {
                     DBGLOG(Info, "Master name changed to: %s", infoMsg->getName().c_str());
                     master.name = infoMsg->getName();
@@ -351,7 +341,7 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
         KiSCProtoV2Message_network* networkMsg = dynamic_cast<KiSCProtoV2Message_network*>(msg);
         if (networkMsg->getSubCommand() == MSGTYPE_NETWORK_ACCEPT) {
             if (!(dynamic_cast<KiSCProtoV2Slave*>(kiscprotoV2))->isMasterFound()) {
-                DBGLOG(Info, "KiSCProtoV2Slave.messageReceived: Accept Response from %02X %02X %02X %02X %02X %02X", msg->getSource().getAddress()[0], msg->getSource().getAddress()[1], msg->getSource().getAddress()[2], msg->getSource().getAddress()[3], msg->getSource().getAddress()[4], msg->getSource().getAddress()[5]);
+                DBGLOG(Info, "Accept Response from %02X %02X %02X %02X %02X %02X", msg->getSource().getAddress()[0], msg->getSource().getAddress()[1], msg->getSource().getAddress()[2], msg->getSource().getAddress()[3], msg->getSource().getAddress()[4], msg->getSource().getAddress()[5]);
                 KiSCPeer _master;
                 _master.address = networkMsg->getSource();
                 _master.lastMsg = millis();
@@ -416,14 +406,16 @@ void
 KiSCProtoV2Master::taskTick1s() {
     KiSCProtoV2::taskTick1s();
     // Send heartbeat to all active slaves
-    for (KiSCPeer slave : slaves) {
-        if (millis() - slave.lastMsg > 5000) {
-            slave.active = false;
-            DBGLOG(Warning, "Slave %02X %02X %02X %02X %02X %02X not responding", slave.address.getAddress()[0], slave.address.getAddress()[1], slave.address.getAddress()[2], slave.address.getAddress()[3], slave.address.getAddress()[4], slave.address.getAddress()[5]);
+    DBGLOG(Debug , "checking %d slaves", slaves.size());
+    for (KiSCPeer *slave : slaves) {
+        DBGLOG(Debug, "  Checking slave %s", slave->name.c_str());
+        if (millis() - slave->lastMsg > 5000) {
+            slave->active = false;
+            DBGLOG(Warning, "Slave %s not responding", slave->name.c_str());
         }
-        if (slave.active) {
-            DBGLOG(Verbose, "Pinging %02X %02X %02X %02X %02X %02X", slave.address.getAddress()[0], slave.address.getAddress()[1], slave.address.getAddress()[2], slave.address.getAddress()[3], slave.address.getAddress()[4], slave.address.getAddress()[5]);
-            KiSCProtoV2Message_Info msg(slave.address.getAddress());
+        if (slave->active) {
+            DBGLOG(Debug, "Pinging %s", slave->name.c_str());
+            KiSCProtoV2Message_Info msg(slave->address.getAddress());
             msg.setName(name);
             msg.setRole(role);
             msg.setState(state);
@@ -431,8 +423,11 @@ KiSCProtoV2Master::taskTick1s() {
             send(&msg);
         }
     }
-    // Check for offline peers and remove them
-    slaves.erase(std::remove_if(slaves.begin(), slaves.end(), [](KiSCPeer slave) { return !slave.active; }), slaves.end());
+    // Check for offline peers and remove them and delete added pointer
+    slaves.erase(std::remove_if(slaves.begin(), slaves.end(), [](KiSCPeer *slave) { return !slave->active; }), slaves.end());
+
+
+//    slaves.erase(std::remove_if(slaves.begin(), slaves.end(), [](KiSCPeer *slave) { return !slave->active; }), slaves.end());
 
     // Turn off broadcast after 3 sek
     if (millis() - broadcastStart > 3000) {
@@ -453,9 +448,16 @@ KiSCProtoV2Master::taskTick500ms() {
 
 bool
 KiSCProtoV2Master::canAdd(KiSCPeer slave) {
+    // check if slave is already in list, if so, update lastMsg time
+    for (KiSCPeer *_slave : slaves) {
+        if (_slave->address == slave.address) {
+            _slave->lastMsg = millis();
+            return true;
+        }
+    }
     // Check existing slaves, if a slave of the given type is already there. If so, reject the new slave
-    for (KiSCPeer _slave : slaves) {
-        if (_slave.type == slave.type) {
+    for (KiSCPeer* _slave : slaves) {
+        if (_slave->type == slave.type) {
             return false;
         }
     }
@@ -471,15 +473,16 @@ KiSCProtoV2Master::messageReceived(KiSCProtoV2Message* msg, signed int rssi, boo
     DBGLOG(Debug, "KiSCProtoV2Master.messageReceived()");
     KiSCProtoV2::messageReceived(msg, rssi, broadcast, false);
     if (broadcast) {
-        DBGLOG(Info, "Broadcast message received, enabling broadcast announcements");
+        DBGLOG(Debug, "Broadcast message received, enabling broadcast announcements");
         broadcastActive = true;
         broadcastStart = millis();
     } else {
         // Check, if peer exists, than update the last Msg time
-        for (KiSCPeer slave : slaves) {
-            if (slave.address == msg->getSource()) {
-                slave.lastMsg = millis();
-                slave.active = true;
+        for (KiSCPeer *slave : slaves) {
+            if (slave->address == msg->getSource()) {
+                DBGLOG(Debug, "Slave %s found", slave->name.c_str());
+                slave->lastMsg = millis();
+                slave->active = true;
             }
         }
     }
@@ -495,13 +498,14 @@ KiSCProtoV2Master::messageReceived(KiSCProtoV2Message* msg, signed int rssi, boo
             DBGLOG(Info, "Join Request from %02X %02X %02X %02X %02X %02X", msg->getSource().getAddress()[0], msg->getSource().getAddress()[1], msg->getSource().getAddress()[2], msg->getSource().getAddress()[3], msg->getSource().getAddress()[4], msg->getSource().getAddress()[5]);
             KiSCProtoV2Message_network acceptMsg(msg->getSource().getAddress());
             KiSCPeer _slave;
+            _slave.active = true;
             _slave.name = networkMsg->getName();
             _slave.type = networkMsg->getType();
             _slave.address = networkMsg->getSource();
             _slave.lastMsg = millis();
             if (canAdd(_slave)) {
-                DBGLOG(Info, "Slave added %02X %02X %02X %02X %02X %02X", _slave.address.getAddress()[0], _slave.address.getAddress()[1], _slave.address.getAddress()[2], _slave.address.getAddress()[3], _slave.address.getAddress()[4], _slave.address.getAddress()[5]);
-                dynamic_cast<KiSCProtoV2Master*>(kiscprotoV2)->addSlave(KiSCPeer(_slave));
+                DBGLOG(Debug, "Slave added %02X %02X %02X %02X %02X %02X", _slave.address.getAddress()[0], _slave.address.getAddress()[1], _slave.address.getAddress()[2], _slave.address.getAddress()[3], _slave.address.getAddress()[4], _slave.address.getAddress()[5]);
+                dynamic_cast<KiSCProtoV2Master*>(kiscprotoV2)->addSlave(new KiSCPeer(_slave));
                 acceptMsg.setAcceptResponse();
             } else {
                 DBGLOG(Warning, "Slave not added %02X %02X %02X %02X %02X %02X", _slave.address.getAddress()[0], _slave.address.getAddress()[1], _slave.address.getAddress()[2], _slave.address.getAddress()[3], _slave.address.getAddress()[4], _slave.address.getAddress()[5]);
@@ -521,8 +525,14 @@ KiSCProtoV2Master::messageReceived(KiSCProtoV2Message* msg, signed int rssi, boo
 }
 
 void                    
-KiSCProtoV2Master::addSlave(KiSCPeer slave) { 
-    DBGLOG(Info, "adding slave %02X %02X %02X %02X %02X %02X Type %d Name %s", slave.address.getAddress()[0], slave.address.getAddress()[1], slave.address.getAddress()[2], slave.address.getAddress()[3], slave.address.getAddress()[4], slave.address.getAddress()[5], slave.type, slave.name.c_str());
+KiSCProtoV2Master::addSlave(KiSCPeer* slave) { 
+    // only add, if not already in list
+    for (KiSCPeer *_slave : slaves) {
+        if (_slave->address == slave->address) {
+            return;
+        }
+    }
+    DBGLOG(Debug, "adding slave Type %d Name %s", slave->type, slave->name.c_str());
     slaves.push_back(slave); 
 }
 
@@ -537,144 +547,3 @@ KiSCProtoV2Master::sendBroadcastOffer() {
     send(&msg);
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// KiSCProtoV2Message_Info
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-KiSCProtoV2Message_Info::KiSCProtoV2Message_Info(uint8_t address[]) : KiSCProtoV2Message(address) {
-    DBGLOG(Debug, "KiSCProtoV2Message_Info()");
-}
-
-void KiSCProtoV2Message_Info::buildBufferedMessage() {
-    DBGLOG(Debug, "KiSCProtoV2Message_Info.buildBufferedMessage()");
-//    KiSCProtoV2Message::buildBufferedMessage();
-    memcpy(msg.dstAddress, target.getAddress(), sizeof(msg.dstAddress));
-    msg.payload[0] = PROTO_VERSION;
-    msg.payload[1] = MSGTYPE_INFO;
-    msg.payload_len = msg.payload_len;
-
-    // Add payload
-    // 0: Version
-    // 1: Message Type
-    // 2: Rollen ID
-    // 3: State
-    // 4: Type
-    // 5-13: Name
-    
-    msg.payload[2] = role;
-    msg.payload[3] = state;
-    msg.payload[4] = type;
-    for (int i = 0; i < name.length(); i++) {
-        msg.payload[5+i] = name[i];
-    }
-    msg.payload_len = 5 + name.length();
-}
-
-bool
-KiSCProtoV2Message_Info::buildFromBuffer() {
-    DBGLOG(Debug, "KiSCProtoV2Message_Info.buildFromBuffer()");
-    KiSCProtoV2Message::buildFromBuffer();
-    // Dump payload in lines to 16 Bytes
-
-    char line[255];
-    sprintf(line, "Payload: %d", msg.payload_len);
-    for (int i=0; i<msg.payload_len; i++) {
-        sprintf(line, "%s %02X", line, msg.payload[i]);
-    }
-    DBGLOG(Debug, line);
-    
-    memcpy(target.getAddress(), msg.dstAddress, sizeof(msg.dstAddress));
-    if (msg.payload_len < 2) {
-        return false;
-    }
-    if (msg.payload[1] != MSGTYPE_INFO) {
-        return false;
-    }
-    role = (KiSCPeer::Role)msg.payload[2];
-    state = (KiSCPeer::State)msg.payload[3];
-    type = (KiSCPeer::SlaveType)msg.payload[4];	
-    name = "";
-    for (int i = 5; i < msg.payload_len; i++) {
-        name += (char)msg.payload[i];
-    }
-    return true;
-}
-
-void
-KiSCProtoV2Message_Info::dump() {
-    DBGLOG(Verbose, "Info from %s (%02X:%02X:%02X:%02X:%02X:%02X) to %02X:%02X:%02X:%02X:%02X:%02X", name.c_str(), source.getAddress()[0], source.getAddress()[1], source.getAddress()[2], source.getAddress()[3], source.getAddress()[4], source.getAddress()[5], target.getAddress()[0], target.getAddress()[1], target.getAddress()[2], target.getAddress()[3], target.getAddress()[4], target.getAddress()[5]);
-/*    DBGLOG(Verbose, "From %02X %02X %02X %02X %02X %02X", source.getAddress()[0], source.getAddress()[1], source.getAddress()[2], source.getAddress()[3], source.getAddress()[4], source.getAddress()[5]);
-    DBGLOG(Verbose, "To %02X %02X %02X %02X %02X %02X", target.getAddress()[0], target.getAddress()[1], target.getAddress()[2], target.getAddress()[3], target.getAddress()[4], target.getAddress()[5]);
-    DBGLOG(Verbose, "  Name: %s", name.c_str());
-    DBGLOG(Verbose, "  Role: %d", role);
-    DBGLOG(Verbose, "  State: %d", state);
-*/    
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// KiSCProtoV2Message_network
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-KiSCProtoV2Message_network::KiSCProtoV2Message_network(uint8_t address[]) : KiSCProtoV2Message(address) {
-    DBGLOG(Debug, "KiSCProtoV2Message_network()");
-}
-
-bool
-KiSCProtoV2Message_network::buildFromBuffer() {
-    DBGLOG(Debug, "KiSCProtoV2Message_network.buildFromBuffer()");
-    KiSCProtoV2Message::buildFromBuffer();
-    if (msg.payload_len < 2) {
-        return false;
-    }
-    if ((msg.payload[1] != MSGTYPE_NETWORK) && (msg.payload[1] != MSGTYPE_NETWORK_JOIN) && (msg.payload[1] != MSGTYPE_NETWORK_LEAVE) && (msg.payload[1] != MSGTYPE_NETWORK_ACCEPT) && (msg.payload[1] != MSGTYPE_NETWORK_REJECT)) {
-        return false;
-    }
-    subCommand = msg.payload[2];
-    type = KiSCPeer::SlaveType(msg.payload[3]);
-    name = "";
-    for (int i = 4; i < msg.payload_len; i++) {
-        name += (char)msg.payload[i];
-    }
-
-    return true;
-}
-void
-KiSCProtoV2Message_network::buildBufferedMessage() {
-    DBGLOG(Debug, "KiSCProtoV2Message_network.buildBufferedMessage()");
-    KiSCProtoV2Message::buildBufferedMessage();
-    memcpy(msg.dstAddress, target.getAddress(), sizeof(msg.dstAddress));
-    msg.payload[0] = PROTO_VERSION;
-    msg.payload[1] = subCommand == 0 ? MSGTYPE_NETWORK : subCommand;
-    msg.payload[2] = subCommand;
-    msg.payload[3] = getType();
-    // add name
-    for (int i = 0; i < name.length(); i++) {
-        msg.payload[4+i] = name[i];
-    }
-    msg.payload_len = 4+name.length();
-}
-
-void
-KiSCProtoV2Message_network::dump() {
-    switch (subCommand) {
-        case MSGTYPE_NETWORK_JOIN:
-            DBGLOG(Verbose, "Join Request from %02X %02X %02X %02X %02X %02X", source.getAddress()[0], source.getAddress()[1], source.getAddress()[2], source.getAddress()[3], source.getAddress()[4], source.getAddress()[5]);
-            break;
-        case MSGTYPE_NETWORK_LEAVE:
-            DBGLOG(Verbose, "Leave Request from %02X %02X %02X %02X %02X %02X", source.getAddress()[0], source.getAddress()[1], source.getAddress()[2], source.getAddress()[3], source.getAddress()[4], source.getAddress()[5]);
-            break;
-        case MSGTYPE_NETWORK_ACCEPT:
-            DBGLOG(Verbose, "Accept Response from %02X %02X %02X %02X %02X %02X", source.getAddress()[0], source.getAddress()[1], source.getAddress()[2], source.getAddress()[3], source.getAddress()[4], source.getAddress()[5]);
-            break;
-        case MSGTYPE_NETWORK_REJECT:
-            DBGLOG(Verbose, "Reject Response from %02X %02X %02X %02X %02X %02X", source.getAddress()[0], source.getAddress()[1], source.getAddress()[2], source.getAddress()[3], source.getAddress()[4], source.getAddress()[5]);
-            break;
-        default:
-            DBGLOG(Verbose, "Unknown network message");
-            break;
-    }
-
-//    DBGLOG(Debug, "KiSCProtoV2Message_network.dump()");
-}

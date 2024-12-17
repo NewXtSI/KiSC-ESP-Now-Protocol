@@ -134,14 +134,14 @@ class KiSCProtoV2Master : public KiSCProtoV2 {
     explicit                KiSCProtoV2Master(String name);
     void                    taskTick500ms(); 
     virtual void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer = true);
-    void                    addSlave(KiSCPeer slave);
+    void                    addSlave(KiSCPeer* slave);
     void                    taskTick1s();
     bool                    canAdd(KiSCPeer slave);
  private:
     bool                    broadcastActive;
     uint32_t                broadcastStart;
     void                    sendBroadcastOffer();
-    std::vector<KiSCPeer>   slaves;
+    std::vector<KiSCPeer*>   slaves;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -212,5 +212,15 @@ class KiSCProtoV2Message_network : public KiSCProtoV2Message {
     KiSCPeer::SlaveType type;
 };
 //extern KiSCProtoV2 *kiscprotoV2;
+
+#define PROTO_VERSION   0x20
+
+#define MSGTYPE_INFO            0x01
+#define MSGTYPE_NETWORK         0x10
+#define MSGTYPE_NETWORK_JOIN    0x11
+#define MSGTYPE_NETWORK_LEAVE   0x12
+#define MSGTYPE_NETWORK_ACCEPT  0x13
+#define MSGTYPE_NETWORK_REJECT  0x14
+
 
 #endif  /* INCLUDE_KISCPROTOV2_INCLUDED */
