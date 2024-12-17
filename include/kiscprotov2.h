@@ -174,7 +174,7 @@ class KiSCProtoV2Message_Info : public KiSCProtoV2Message {
     KiSCPeer::State     getState() { return state; }
     KiSCPeer::SlaveType getType() { return type; }
 
-    virtual void         messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
+//    virtual void         messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
  private:
     String              name;
     KiSCPeer::Role      role;
