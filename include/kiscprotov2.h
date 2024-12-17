@@ -156,7 +156,7 @@ class KiSCProtoV2Slave : public KiSCProtoV2 {
     KiSCPeer*               getMaster() { return &master; }
     bool                    isMasterFound() { return masterFound; }
  protected:
-    static void             dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast);
+//    static void             dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast);
  private:
     KiSCPeer::SlaveType     type = KiSCPeer::Unidentified;
     bool                    masterFound = false;

@@ -41,8 +41,42 @@ KiSCProtoV2::dataSent(uint8_t* address, uint8_t status) {
     ESPNowSent = true;
 }
 
+void hexdump(void *ptr, int buflen, bool in) {
+  unsigned char *buf = (unsigned char*)ptr;
+  int i, j;
+  char line[255];
+  for (i=0; i<buflen; i+=16) {
+    sprintf(line, "%s %06x: ", in?"IN ":"OUT", i);
+    for (j=0; j<16; j++) 
+      if (i+j < buflen)
+        sprintf(line, "%s%02x ", line, buf[i+j]);
+      else
+        sprintf(line,"%s   ", line);
+    sprintf(line,"%s ",line);
+    for (j=0; j<16; j++) 
+      if (i+j < buflen)
+        sprintf(line,"%s%c", line,isprint(buf[i+j]) ? buf[i+j] : '.');
+     DBGLOG(Info, line);
+  }
+}
+
+void dmp(uint8_t* data, uint8_t len, bool incoming) {
+    hexdump(data, len, incoming);
+        // Create lines of Hexdump with 8 bytes per line with following char (if printable)
+#if 0        
+    char line[255];
+    sprintf(line, "%s Payload: %d |", incoming ? "IN " : "OUT", len);
+    for (int i=0; i<len; i++) {
+        sprintf(line, "%s %02X", line, data[i]);
+    }
+    DBGLOG(Info, line);
+#endif    
+
+}
+
 void
 KiSCProtoV2::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast) {
+    dmp(data, len, true);
     DBGLOG(Debug, "KiSCProtoV2.dataReceived %d, Broadcast: %d", len, broadcast);
     espnowmsg_t msg;
     memcpy(msg.srcAddress, address, sizeof(msg.srcAddress));
@@ -64,7 +98,6 @@ KiSCProtoV2::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed i
             sprintf(line, "%s %02X", line, msg.payload[i]);
         }
         DBGLOG(Warning, line);
-
     }
 }
 
@@ -214,6 +247,7 @@ void
 KiSCProtoV2::_sendViaESPNow(espnowmsg_t msg) {
     DBGLOG(Debug, "KiSCProtoV2._sendViaESPNow, Payloadlength: %d", msg.payload_len);
     ESPNowSent = false;
+    dmp(msg.payload, msg.payload_len, false);
     quickEspNow.send(msg.dstAddress, msg.payload, msg.payload_len);
 }
 
@@ -284,7 +318,6 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
     if ((!broadcast) && (msg->getSource() == master.address)) {
         master.lastMsg = millis();
     }
-    DBGLOG(Info, "KiSCProtoV2Slave.messageReceived");
     if (msg->getCommand() == MSGTYPE_INFO) {
 //    if (msg->isA<KiSCProtoV2Message_Info>()) {
         KiSCProtoV2Message_Info* infoMsg = dynamic_cast<KiSCProtoV2Message_Info*>(msg);
@@ -334,17 +367,11 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
 }
 
 void
-KiSCProtoV2Slave::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast) {
-    KiSCProtoV2::dataReceived(address, data, len, rssi, broadcast);
-    DBGLOG(Debug, "KiSCProtoV2Slave::dataReceived");
-}
-
-void
 KiSCProtoV2Slave::taskTick1s() {
     KiSCProtoV2::taskTick1s();
     DBGLOG(Debug, "KiSCProtoV2Slave.taskTick1s()");
     if (masterFound) {
-        if (millis() - master.lastMsg > 5000) {
+        if (millis() - master.lastMsg > 10000) {
             DBGLOG(Warning, "Master not responding");
             masterFound = false;
         } else {
@@ -566,8 +593,9 @@ KiSCProtoV2Message_Info::buildFromBuffer() {
     }
     role = (KiSCPeer::Role)msg.payload[2];
     state = (KiSCPeer::State)msg.payload[3];
+    type = (KiSCPeer::SlaveType)msg.payload[4];	
     name = "";
-    for (int i = 4; i < msg.payload_len; i++) {
+    for (int i = 5; i < msg.payload_len; i++) {
         name += (char)msg.payload[i];
     }
     return true;
