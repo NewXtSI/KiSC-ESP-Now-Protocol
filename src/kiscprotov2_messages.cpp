@@ -162,7 +162,7 @@ KiSCProtoV2Message_BTAudio::buildFromBuffer() {
     if (msg.payload_len < 2) {
         return false;
     }
-    if ((msg.payload[1] != MSGTYPE_BT_AUDIO) && (msg.payload[1] != MSGTYPE_BT_AUDIO_INFO) && (msg.payload[1] != MSGTYPE_BT_AUDIO_CONTROL)) {
+    if ((msg.payload[1] != MSGTYPE_BT_AUDIO) && (msg.payload[1] != MSGTYPE_BT_AUDIO_INFO) && (msg.payload[1] != MSGTYPE_BT_AUDIO_CTRL)) {
         return false;
     }
     subCommand = msg.payload[2];
