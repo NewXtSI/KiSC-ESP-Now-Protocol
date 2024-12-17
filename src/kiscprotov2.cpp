@@ -42,6 +42,7 @@ KiSCProtoV2::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed i
 
     KiSCProtoV2Message *kiscmsg = buildProtoMessage(msg);
     if (kiscmsg != nullptr) {
+        DBGLOG(Debug, "KiSCProtoV2.dataReceived: Message built");
         messageReceived(kiscmsg, rssi, broadcast);
     }
 }
@@ -49,9 +50,11 @@ KiSCProtoV2::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed i
 KiSCProtoV2Message* 
 KiSCProtoV2::buildProtoMessage(espnowmsg_t msg) {
     if (msg.payload_len < 2) {     // Gibt es nicht mehr
+        DBGLOG(Error, "Invalid message length");
         return nullptr;
     }
     if (msg.payload[0] > PROTO_VERSION) {  // Proto 2.0
+        DBGLOG(Error, "Unsupported protocol version");
         return nullptr;
     }
     uint8_t msgType = msg.payload[1];
@@ -61,9 +64,12 @@ KiSCProtoV2::buildProtoMessage(espnowmsg_t msg) {
         if (kiscmsg->buildFromBuffer()) {
             return kiscmsg;
         } else {
+            DBGLOG(Error, "Failed to build message from buffer");            
             delete kiscmsg;
             return nullptr;
         }
+    } else {
+        DBGLOG(Error, "Unsupported message type %d", msgType);
     }
     return nullptr;
 }
@@ -74,6 +80,8 @@ KiSCProtoV2::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broa
 
     if (msg->isA<KiSCProtoV2Message_Info>()) {
         DBGLOG(Debug, "KiSCProtoV2Message_Info");
+        KiSCProtoV2Message_Info* infoMsg = dynamic_cast<KiSCProtoV2Message_Info*>(msg);
+        infoMsg->dump();
     }
 
     delete msg;
@@ -152,12 +160,12 @@ KiSCProtoV2::start() {
 }
 
 void
-KiSCProtoV2::send(KiSCProtoV2Message msg) {
+KiSCProtoV2::send(KiSCProtoV2Message *msg) {
     DBGLOG(Debug, "KiSCProtoV2.send()");
-    msg.buildBufferedMessage();
-    msg.setSource(address);
+    msg->buildBufferedMessage();
+    msg->setSource(address);
     
-    if (xQueueSend(sendQueue, msg.getBufferedMessage(), 0) == pdTRUE) {
+    if (xQueueSend(sendQueue, msg->getBufferedMessage(), 0) == pdTRUE) {
         DBGLOG(Debug, "Message queued");
     } else {
         DBGLOG(Warning, "Failed to queue message");
@@ -233,7 +241,14 @@ KiSCProtoV2Slave::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, sig
     DBGLOG(Debug, "KiSCProtoV2Slave::dataReceived");
 }
 
-
+void
+KiSCProtoV2Slave::taskTick500ms() {
+    DBGLOG(Debug, "KiSCProtoV2Slave.taskTick500ms()");
+    if (!masterFound) {
+        KiSCProtoV2Message_Info msg(BroadcastAddress.getAddress());
+        send(&msg);
+    }
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // KiSCProtoV2Master
@@ -256,7 +271,7 @@ void
 KiSCProtoV2Master::sendBroadcastOffer() {
     KiSCProtoV2Message_Info msg(BroadcastAddress.getAddress());
     DBGLOG(Debug, "KiSCProtoV2Master.sendBroadcastOffer()");
-    send(msg);
+    send(&msg);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -264,10 +279,14 @@ KiSCProtoV2Master::sendBroadcastOffer() {
 // KiSCProtoV2Message_Info
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+KiSCProtoV2Message_Info::KiSCProtoV2Message_Info(uint8_t address[]) : KiSCProtoV2Message(address) {
+    DBGLOG(Debug, "KiSCProtoV2Message_Info()");
+}
 void KiSCProtoV2Message_Info::buildBufferedMessage() {
     DBGLOG(Debug, "KiSCProtoV2Message_Info.buildBufferedMessage()");
-    KiSCProtoV2Message::buildBufferedMessage();
+//    KiSCProtoV2Message::buildBufferedMessage();
     memcpy(msg.dstAddress, target.getAddress(), sizeof(msg.dstAddress));
+    msg.payload[0] = PROTO_VERSION;
     msg.payload[1] = MSGTYPE_INFO;
     msg.payload_len = msg.payload_len;
 

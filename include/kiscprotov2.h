@@ -99,7 +99,7 @@ class KiSCProtoV2 {
 
     static void         messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
     static void         task(void* param);
-    void                send(KiSCProtoV2Message msg);
+    void                send(KiSCProtoV2Message *msg);
     KiSCAddress         getAddress() { return address; }
     static KiSCProtoV2Message* buildProtoMessage(espnowmsg_t msg);
     virtual void                taskTick100ms();
@@ -137,6 +137,7 @@ class KiSCProtoV2Slave : public KiSCProtoV2 {
  public:
     explicit                KiSCProtoV2Slave(String name);
     void                    setType(KiSCPeer::SlaveType type) { this->type = type; }
+    void                    taskTick500ms(); 
  protected:
     static void             dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast);
  private:
@@ -148,10 +149,10 @@ class KiSCProtoV2Slave : public KiSCProtoV2 {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class KiSCProtoV2Message_Info : public KiSCProtoV2Message {
  public:
-    KiSCProtoV2Message_Info(uint8_t address[]) : KiSCProtoV2Message(address) {}
+    KiSCProtoV2Message_Info(uint8_t address[]);
 
     virtual bool    buildFromBuffer();
-    virtual void    buildBufferedMessage();
+    void    buildBufferedMessage() override;
     virtual void    dump();
  private:
     String              name;
