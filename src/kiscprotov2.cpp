@@ -22,8 +22,11 @@ KiSCAddress BroadcastAddress(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
 #define MSGTYPE_INFO    0x01
 
+KiSCProtoV2 *kiscprotoV2;
+
 KiSCProtoV2::KiSCProtoV2(String name, KiSCPeer::Role role) : name(name), role(role) {
     DBGLOG(Debug, "KiSCProtoV2()");
+    kiscprotoV2 = this;
 }
 
 void
@@ -37,6 +40,11 @@ KiSCProtoV2::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed i
     DBGLOG(Debug, "KiSCProtoV2.dataReceived %d, Broadcast: %d", len, broadcast);
     espnowmsg_t msg;
     memcpy(msg.srcAddress, address, sizeof(msg.srcAddress));
+    if (broadcast) {
+        memcpy(msg.dstAddress, BroadcastAddress.getAddress(), sizeof(msg.dstAddress));
+    } else {
+        memcpy(msg.dstAddress, kiscprotoV2->getAddress().getAddress(), sizeof(msg.dstAddress));
+    }
     memcpy(msg.payload, data, len);
     msg.payload_len = len;
 
@@ -64,7 +72,7 @@ KiSCProtoV2::buildProtoMessage(espnowmsg_t msg) {
         if (kiscmsg->buildFromBuffer()) {
             return kiscmsg;
         } else {
-            DBGLOG(Error, "Failed to build message from buffer");            
+            DBGLOG(Error, "Failed to build message from buffer");
             delete kiscmsg;
             return nullptr;
         }
@@ -236,6 +244,12 @@ KiSCProtoV2Slave::KiSCProtoV2Slave(String name) : KiSCProtoV2(name, KiSCPeer::Sl
 }
 
 void
+KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast) {
+    DBGLOG(Debug, "KiSCProtoV2Slave.messageReceived");
+    KiSCProtoV2::messageReceived(msg, rssi, broadcast);
+}
+
+void
 KiSCProtoV2Slave::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast) {
     KiSCProtoV2::dataReceived(address, data, len, rssi, broadcast);
     DBGLOG(Debug, "KiSCProtoV2Slave::dataReceived");
@@ -264,12 +278,18 @@ KiSCProtoV2Master::KiSCProtoV2Master(String name) : KiSCProtoV2(name, KiSCPeer::
     broadcastActive = true;
 }
 
-void                    
+void
 KiSCProtoV2Master::taskTick500ms() {
     DBGLOG(Debug, "KiSCProtoV2Master.taskTick500ms()");
     if (broadcastActive) {
         sendBroadcastOffer();
     }
+}
+
+void
+KiSCProtoV2Master::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast) {
+    DBGLOG(Debug, "KiSCProtoV2Master.messageReceived()");
+    KiSCProtoV2::messageReceived(msg, rssi, broadcast);
 }
 
 void

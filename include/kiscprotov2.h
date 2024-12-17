@@ -127,6 +127,7 @@ class KiSCProtoV2Master : public KiSCProtoV2 {
  public:
     explicit                KiSCProtoV2Master(String name);
     void                    taskTick500ms(); 
+    static void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
  private:
     bool                    broadcastActive;
     void                    sendBroadcastOffer();
@@ -139,6 +140,7 @@ class KiSCProtoV2Slave : public KiSCProtoV2 {
     explicit                KiSCProtoV2Slave(String name);
     void                    setType(KiSCPeer::SlaveType type) { this->type = type; }
     void                    taskTick500ms(); 
+    static void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
  protected:
     static void             dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast);
  private:
@@ -150,20 +152,23 @@ class KiSCProtoV2Slave : public KiSCProtoV2 {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class KiSCProtoV2Message_Info : public KiSCProtoV2Message {
  public:
-    KiSCProtoV2Message_Info(uint8_t address[]);
+                        KiSCProtoV2Message_Info(uint8_t address[]);
 
-    virtual bool    buildFromBuffer();
-    void    buildBufferedMessage() override;
-    virtual void    dump();
-    void           setName(String name) { this->name = name; }
-    void           setRole(KiSCPeer::Role role) { this->role = role; }
-    void           setState(KiSCPeer::State state) { this->state = state; }
-    void           setType(KiSCPeer::SlaveType type) { this->type = type; }
+    virtual bool        buildFromBuffer();
+    void                buildBufferedMessage() override;
+    virtual void        dump();
+    void                setName(String name) { this->name = name; }
+    void                setRole(KiSCPeer::Role role) { this->role = role; }
+    void                setState(KiSCPeer::State state) { this->state = state; }
+    void                setType(KiSCPeer::SlaveType type) { this->type = type; }
+    static void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
  private:
     String              name;
     KiSCPeer::Role      role;
     KiSCPeer::State     state;
     KiSCPeer::SlaveType type;
 };
+
+//extern KiSCProtoV2 *kiscprotoV2;
 
 #endif  /* INCLUDE_KISCPROTOV2_INCLUDED */
