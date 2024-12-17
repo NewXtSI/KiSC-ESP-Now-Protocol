@@ -42,10 +42,8 @@ class KiSCProtoV2Message {
     virtual bool    buildFromBuffer();
     virtual void    buildBufferedMessage();
     virtual void    dump();
-    template<typename T>
-        bool isA() {
-            return (dynamic_cast<T*>(this) != NULL);
-        }    
+
+    uint8_t          getCommand() { return msg.payload[1]; }
     void            setSource(KiSCAddress source) { this->source = source; }
     void            setTarget(KiSCAddress target) { this->target = target; }
       KiSCAddress     getSource() { return source; }
