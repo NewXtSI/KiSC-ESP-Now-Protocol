@@ -45,7 +45,7 @@ KiSCProtoV2::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed i
     DBGLOG(Debug, "KiSCProtoV2.dataReceived %d, Broadcast: %d", len, broadcast);
     espnowmsg_t msg;
     memcpy(msg.srcAddress, address, sizeof(msg.srcAddress));
-    if (broadcast) {
+    if (broadcast) { 
         memcpy(msg.dstAddress, BroadcastAddress.getAddress(), sizeof(msg.dstAddress));
     } else {
         memcpy(msg.dstAddress, kiscprotoV2->getAddress().getAddress(), sizeof(msg.dstAddress));
@@ -55,7 +55,13 @@ KiSCProtoV2::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed i
 
     KiSCProtoV2Message *kiscmsg = buildProtoMessage(msg);
     if (kiscmsg != nullptr) {
-        DBGLOG(Debug, "KiSCProtoV2.dataReceived: Message built");
+        DBGLOG(Verbose, "Message built (type: %02X)", kiscmsg->getCommand());
+        char line[255];
+        sprintf(line, "Payload: %d", msg.payload_len);
+        for (int i=0; i<msg.payload_len; i++) {
+            sprintf(line, "%s %02X", line, msg.payload[i]);
+        }
+        DBGLOG(Verbose, line);
         kiscprotoV2->messageReceived(kiscmsg, rssi, broadcast);
     } else {
         char line[255];
@@ -112,12 +118,12 @@ KiSCProtoV2::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broa
 
     if (msg->getCommand() == MSGTYPE_INFO) {
 //    if (msg->isA<KiSCProtoV2Message_Info>()) {
-        DBGLOG(Debug, "KiSCProtoV2Message_Info");
+        DBGLOG(Verbose, "Building info messages");
         KiSCProtoV2Message_Info* infoMsg = dynamic_cast<KiSCProtoV2Message_Info*>(msg);
         infoMsg->dump();
     } else if ((msg->getCommand() == MSGTYPE_NETWORK) || (msg->getCommand() == MSGTYPE_NETWORK_JOIN) || (msg->getCommand() == MSGTYPE_NETWORK_LEAVE) || (msg->getCommand() == MSGTYPE_NETWORK_ACCEPT) || (msg->getCommand() == MSGTYPE_NETWORK_REJECT)) {
 //    } else if (msg->isA<KiSCProtoV2Message_network>()) {
-        DBGLOG(Debug, "KiSCProtoV2Message_network");
+        DBGLOG(Verbose, "Building network messages");
         KiSCProtoV2Message_network* networkMsg = dynamic_cast<KiSCProtoV2Message_network*>(msg);
         networkMsg->dump();
     } else {
@@ -250,6 +256,7 @@ KiSCProtoV2Message::buildBufferedMessage() {
     memcpy(msg.srcAddress, source.getAddress(), sizeof(msg.srcAddress));
     memset(msg.payload, 0, sizeof(msg.payload));
     msg.payload[0] = PROTO_VERSION;
+    msg.payload[1] = 0xFF;
     msg.payload_len = 2;
 }
 

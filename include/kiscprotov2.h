@@ -44,8 +44,8 @@ class KiSCProtoV2Message {
     virtual void    dump();
 
     uint8_t          getCommand() { return msg.payload[1]; }
-    void            setSource(KiSCAddress source) { this->source = source; }
-    void            setTarget(KiSCAddress target) { this->target = target; }
+    void                setSource(KiSCAddress source) { this->source = source; }
+    void                setTarget(KiSCAddress target) { this->target = target; }
       KiSCAddress     getSource() { return source; }
       KiSCAddress     getTarget() { return target; }
  protected:        
