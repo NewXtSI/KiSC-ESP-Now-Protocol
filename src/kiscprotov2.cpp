@@ -18,6 +18,10 @@ QueueHandle_t KiSCProtoV2::sendQueue = nullptr	;
 
 KiSCAddress BroadcastAddress(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
+#define PROTO_VERSION   0x20
+
+#define MSGTYPE_INFO    0x01
+
 KiSCProtoV2::KiSCProtoV2(String name, KiSCPeer::Role role) : name(name), role(role) {
     DBGLOG(Debug, "KiSCProtoV2()");
 }
@@ -44,13 +48,33 @@ KiSCProtoV2::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed i
 
 KiSCProtoV2Message* 
 KiSCProtoV2::buildProtoMessage(espnowmsg_t msg) {
-    KiSCProtoV2Message *kiscmsg = new KiSCProtoV2Message(msg.dstAddress);
-    return kiscmsg;
+    if (msg.payload_len < 2) {     // Gibt es nicht mehr
+        return nullptr;
+    }
+    if (msg.payload[0] > PROTO_VERSION) {  // Proto 2.0
+        return nullptr;
+    }
+    uint8_t msgType = msg.payload[1];
+    if (msgType == MSGTYPE_INFO) {
+        KiSCProtoV2Message_Info *kiscmsg = new KiSCProtoV2Message_Info(msg.srcAddress);
+        kiscmsg->setBufferedMessage(&msg);
+        if (kiscmsg->buildFromBuffer()) {
+            return kiscmsg;
+        } else {
+            delete kiscmsg;
+            return nullptr;
+        }
+    }
+    return nullptr;
 }
 
 void         
 KiSCProtoV2::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast) {
     DBGLOG(Debug, "KiSCProtoV2.messageReceived");
+
+    if (msg->isA<KiSCProtoV2Message_Info>()) {
+        DBGLOG(Debug, "KiSCProtoV2Message_Info");
+    }
 
     delete msg;
 }
@@ -69,6 +93,10 @@ KiSCProtoV2::init() {
         quickEspNow.begin(2, 0, false);
         quickEspNow.onDataSent(KiSCProtoV2::dataSent);
         quickEspNow.onDataRcvd(KiSCProtoV2::dataReceived);
+        // Address auf eigene WiFi MAC setzen
+        uint8_t mac[6];
+        esp_wifi_get_mac(WIFI_IF_STA, mac);
+        address = KiSCAddress(mac);
     } else {
         DBGLOG(Warning, "ESPNow already initialized");
     }
@@ -126,6 +154,9 @@ KiSCProtoV2::start() {
 void
 KiSCProtoV2::send(KiSCProtoV2Message msg) {
     DBGLOG(Debug, "KiSCProtoV2.send()");
+    msg.buildBufferedMessage();
+    msg.setSource(address);
+    
     if (xQueueSend(sendQueue, msg.getBufferedMessage(), 0) == pdTRUE) {
         DBGLOG(Debug, "Message queued");
     } else {
@@ -169,16 +200,24 @@ void
 KiSCProtoV2Message::buildBufferedMessage() {
     DBGLOG(Debug, "KiSCProtoV2Message.buildBufferedMessage()");
     memcpy(msg.dstAddress, target.getAddress(), sizeof(msg.dstAddress));
+    memcpy(msg.srcAddress, source.getAddress(), sizeof(msg.srcAddress));
     memset(msg.payload, 0, sizeof(msg.payload));
-    msg.payload_len = 0;
+    msg.payload[0] = PROTO_VERSION;
+    msg.payload_len = 2;
 }
 
-void
+bool
 KiSCProtoV2Message::buildFromBuffer() {
     DBGLOG(Debug, "KiSCProtoV2Message.buildFromBuffer()");
     memcpy(target.getAddress(), msg.dstAddress, sizeof(msg.dstAddress));
+    memcpy(source.getAddress(), msg.srcAddress, sizeof(msg.srcAddress));
+    return true;
 }
 
+void    
+KiSCProtoV2Message::dump() {
+    DBGLOG(Debug, "KiSCProtoV2Message.dump()");
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // KiSCProtoV2Slave
@@ -215,7 +254,64 @@ KiSCProtoV2Master::taskTick500ms() {
 
 void
 KiSCProtoV2Master::sendBroadcastOffer() {
-    KiSCProtoV2Message msg(BroadcastAddress.getAddress());
+    KiSCProtoV2Message_Info msg(BroadcastAddress.getAddress());
     DBGLOG(Debug, "KiSCProtoV2Master.sendBroadcastOffer()");
     send(msg);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// KiSCProtoV2Message_Info
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void KiSCProtoV2Message_Info::buildBufferedMessage() {
+    DBGLOG(Debug, "KiSCProtoV2Message_Info.buildBufferedMessage()");
+    KiSCProtoV2Message::buildBufferedMessage();
+    memcpy(msg.dstAddress, target.getAddress(), sizeof(msg.dstAddress));
+    msg.payload[1] = MSGTYPE_INFO;
+    msg.payload_len = msg.payload_len;
+
+    // Add payload
+    // 0: Version
+    // 1: Message Type
+    // 2: Rollen ID
+    // 3: State
+    // 4-13: Name
+    
+    msg.payload[2] = role;
+    msg.payload[3] = state;
+    for (int i = 0; i < name.length(); i++) {
+        msg.payload[4+i] = name[i];
+    }
+    msg.payload_len = 4 + name.length();
+}
+
+bool
+KiSCProtoV2Message_Info::buildFromBuffer() {
+    DBGLOG(Debug, "KiSCProtoV2Message_Info.buildFromBuffer()");
+    KiSCProtoV2Message::buildFromBuffer();
+    memcpy(target.getAddress(), msg.dstAddress, sizeof(msg.dstAddress));
+    if (msg.payload_len < 2) {
+        return false;
+    }
+    if (msg.payload[1] != MSGTYPE_INFO) {
+        return false;
+    }
+    role = (KiSCPeer::Role)msg.payload[2];
+    state = (KiSCPeer::State)msg.payload[3];
+    name = "";
+    for (int i = 4; i < msg.payload_len; i++) {
+        name += (char)msg.payload[i];
+    }
+    return true;
+}
+
+void
+KiSCProtoV2Message_Info::dump() {
+    DBGLOG(Debug, "From %02X %02X %02X %02X %02X %02X", source.getAddress()[0], source.getAddress()[1], source.getAddress()[2], source.getAddress()[3], source.getAddress()[4], source.getAddress()[5]);
+    DBGLOG(Debug, "To %02X %02X %02X %02X %02X %02X", target.getAddress()[0], target.getAddress()[1], target.getAddress()[2], target.getAddress()[3], target.getAddress()[4], target.getAddress()[5]);
+    DBGLOG(Debug, "  Name: %s", name.c_str());
+    DBGLOG(Debug, "  Role: %d", role);
+    DBGLOG(Debug, "  State: %d", state);
+
 }

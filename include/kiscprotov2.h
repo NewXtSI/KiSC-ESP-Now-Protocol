@@ -11,7 +11,7 @@
 typedef struct {
     uint8_t dstAddress[6]; /**< Message topic*/
     uint8_t srcAddress[6]; /**< Message topic*/
-    uint8_t payload[128*2]; /**< Message payload*/
+    uint8_t payload[200]; /**< Message payload*/
     size_t payload_len; /**< Payload length*/
 } espnowmsg_t;
 
@@ -39,17 +39,23 @@ class KiSCProtoV2Message {
     KiSCProtoV2Message(uint8_t address[]);
     espnowmsg_t*    getBufferedMessage() { buildBufferedMessage(); return &msg; }
     void            setBufferedMessage(espnowmsg_t* msg) { memcpy(&this->msg, msg, sizeof(espnowmsg_t)); }
-    virtual void    buildFromBuffer();
+    virtual bool    buildFromBuffer();
+    virtual void    buildBufferedMessage();
+    virtual void    dump();
     template<typename T>
         bool isA() {
             return (dynamic_cast<T*>(this) != NULL);
         }    
- private:
-    void            buildBufferedMessage();
+    void            setSource(KiSCAddress source) { this->source = source; }
+    void            setTarget(KiSCAddress target) { this->target = target; }
+ protected:        
     espnowmsg_t     msg;
+ private:
    
     KiSCAddress     target;
     KiSCAddress     source;
+
+    friend class KiSCProtoV2Message_Info;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,6 +100,7 @@ class KiSCProtoV2 {
     static void         messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
     static void         task(void* param);
     void                send(KiSCProtoV2Message msg);
+    KiSCAddress         getAddress() { return address; }
     static KiSCProtoV2Message* buildProtoMessage(espnowmsg_t msg);
     virtual void                taskTick100ms();
     virtual void                taskTick500ms();
@@ -111,6 +118,7 @@ class KiSCProtoV2 {
     KiSCPeer::State     state = KiSCPeer::Unknown;
     String              name;
     KiSCPeer::Role      role;
+    KiSCAddress         address;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -135,6 +143,20 @@ class KiSCProtoV2Slave : public KiSCProtoV2 {
     KiSCPeer::SlaveType     type = KiSCPeer::Unidentified;
     bool                    masterFound = false;
     KiSCPeer                master;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class KiSCProtoV2Message_Info : public KiSCProtoV2Message {
+ public:
+    KiSCProtoV2Message_Info(uint8_t address[]) : KiSCProtoV2Message(address) {}
+
+    virtual bool    buildFromBuffer();
+    virtual void    buildBufferedMessage();
+    virtual void    dump();
+ private:
+    String              name;
+    KiSCPeer::Role      role;
+    KiSCPeer::State     state;  
 };
 
 #endif  /* INCLUDE_KISCPROTOV2_INCLUDED */
