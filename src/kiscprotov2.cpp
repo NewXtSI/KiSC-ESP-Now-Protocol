@@ -67,7 +67,7 @@ KiSCProtoV2::buildProtoMessage(espnowmsg_t msg) {
         return nullptr;
     }
     if (msg.payload[0] > PROTO_VERSION) {  // Proto 2.0
-        DBGLOG(Error, "Unsupported protocol version");
+        DBGLOG(Error, "Unsupported protocol version (%02X)", msg.payload[0]);
         return nullptr;
     }
     uint8_t msgType = msg.payload[1];
@@ -462,6 +462,7 @@ void
 KiSCProtoV2Message_network::buildBufferedMessage() {
     DBGLOG(Debug, "KiSCProtoV2Message_network.buildBufferedMessage()");
     KiSCProtoV2Message::buildBufferedMessage();
+    msg.payload[0] = PROTO_VERSION;
     msg.payload[1] = subCommand == 0 ? MSGTYPE_NETWORK : subCommand;
     msg.payload_len = 2;
 }
