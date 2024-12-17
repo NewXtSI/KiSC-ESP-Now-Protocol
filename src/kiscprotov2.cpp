@@ -271,6 +271,8 @@ void
 KiSCProtoV2Master::sendBroadcastOffer() {
     KiSCProtoV2Message_Info msg(BroadcastAddress.getAddress());
     msg.setName(name);
+    msg.setRole(role);
+    msg.setState(state);
     DBGLOG(Debug, "KiSCProtoV2Master.sendBroadcastOffer()");
     send(&msg);
 }

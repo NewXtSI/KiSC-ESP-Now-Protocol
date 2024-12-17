@@ -105,6 +105,10 @@ class KiSCProtoV2 {
     virtual void                taskTick100ms();
     virtual void                taskTick500ms();
     virtual void                taskTick1s();
+ protected:    
+    String              name;
+    KiSCPeer::State     state = KiSCPeer::Unknown;
+    KiSCPeer::Role      role;
  private:
     static QueueHandle_t  sendQueue;
 
@@ -115,9 +119,6 @@ class KiSCProtoV2 {
     const uint8_t       queueSize = 10;
     KiSCPeer            peer;
     rcvdMsgCallback     rcvdMsg = nullptr;
-    KiSCPeer::State     state = KiSCPeer::Unknown;
-    String              name;
-    KiSCPeer::Role      role;
     KiSCAddress         address;
 };
 
@@ -155,6 +156,8 @@ class KiSCProtoV2Message_Info : public KiSCProtoV2Message {
     void    buildBufferedMessage() override;
     virtual void    dump();
     void           setName(String name) { this->name = name; }
+    void           setRole(KiSCPeer::Role role) { this->role = role; }
+    void           setState(KiSCPeer::State state) { this->state = state; }
  private:
     String              name;
     KiSCPeer::Role      role;
