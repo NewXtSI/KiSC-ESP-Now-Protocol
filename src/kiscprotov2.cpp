@@ -77,6 +77,7 @@ KiSCProtoV2::buildProtoMessage(espnowmsg_t msg) {
 void         
 KiSCProtoV2::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast) {
     DBGLOG(Debug, "KiSCProtoV2.messageReceived");
+    msg->buildFromBuffer();
 
     if (msg->isA<KiSCProtoV2Message_Info>()) {
         DBGLOG(Debug, "KiSCProtoV2Message_Info");
@@ -162,11 +163,10 @@ KiSCProtoV2::start() {
 void
 KiSCProtoV2::send(KiSCProtoV2Message *msg) {
     DBGLOG(Debug, "KiSCProtoV2.send()");
-    msg->buildBufferedMessage();
     msg->setSource(address);
     
     if (xQueueSend(sendQueue, msg->getBufferedMessage(), 0) == pdTRUE) {
-        DBGLOG(Debug, "Message queued");
+        DBGLOG(Debug, "Message queued (Payloadlength: %d)", msg->getBufferedMessage()->payload_len);
     } else {
         DBGLOG(Warning, "Failed to queue message");
     }
@@ -175,7 +175,7 @@ KiSCProtoV2::send(KiSCProtoV2Message *msg) {
 
 void
 KiSCProtoV2::_sendViaESPNow(espnowmsg_t msg) {
-    DBGLOG(Debug, "KiSCProtoV2._sendViaESPNow");
+    DBGLOG(Debug, "KiSCProtoV2._sendViaESPNow, Payloadlength: %d", msg.payload_len);
     ESPNowSent = false;
     quickEspNow.send(msg.dstAddress, msg.payload, msg.payload_len);
 }
@@ -255,7 +255,7 @@ KiSCProtoV2Slave::taskTick500ms() {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 KiSCProtoV2Master::KiSCProtoV2Master(String name) : KiSCProtoV2(name, KiSCPeer::Master) {
-    DBGLOG(Debug, "KiSCProtoV2Master()");
+    DBGLOG(Debug, "KiSCProtoV2Master( %s )", name.c_str());
     broadcastActive = true;
 }
 
@@ -270,6 +270,7 @@ KiSCProtoV2Master::taskTick500ms() {
 void
 KiSCProtoV2Master::sendBroadcastOffer() {
     KiSCProtoV2Message_Info msg(BroadcastAddress.getAddress());
+    msg.setName(name);
     DBGLOG(Debug, "KiSCProtoV2Master.sendBroadcastOffer()");
     send(&msg);
 }
@@ -309,6 +310,15 @@ bool
 KiSCProtoV2Message_Info::buildFromBuffer() {
     DBGLOG(Debug, "KiSCProtoV2Message_Info.buildFromBuffer()");
     KiSCProtoV2Message::buildFromBuffer();
+    // Dump payload in lines to 16 Bytes
+
+    char line[255];
+    sprintf(line, "Payload: %d", msg.payload_len);
+    for (int i=0; i<msg.payload_len; i++) {
+        sprintf(line, "%s %02X", line, msg.payload[i]);
+    }
+    DBGLOG(Debug, line);
+    
     memcpy(target.getAddress(), msg.dstAddress, sizeof(msg.dstAddress));
     if (msg.payload_len < 2) {
         return false;

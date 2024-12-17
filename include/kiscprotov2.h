@@ -154,6 +154,7 @@ class KiSCProtoV2Message_Info : public KiSCProtoV2Message {
     virtual bool    buildFromBuffer();
     void    buildBufferedMessage() override;
     virtual void    dump();
+    void           setName(String name) { this->name = name; }
  private:
     String              name;
     KiSCPeer::Role      role;
