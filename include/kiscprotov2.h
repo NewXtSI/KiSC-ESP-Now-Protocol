@@ -190,8 +190,10 @@ class KiSCProtoV2Message_network : public KiSCProtoV2Message {
     virtual void        dump();
     void                setSubCommand(uint8_t subCommand) { this->subCommand = subCommand; }
     uint8_t             getSubCommand() { return subCommand; }
-    void                setJoinRequest() { subCommand = 0x01; }
-    void                setAcceptResponse() { subCommand = 0x02; }
+    void                setJoinRequest() { subCommand = 0x11; }
+    void                setLeaveRequest() { subCommand = 0x12; }
+    void                setAcceptResponse() { subCommand = 0x13; }
+    void                setRejectResponse() { subCommand = 0x14; }
  private:
     uint8_t             subCommand = 0x00;
 };

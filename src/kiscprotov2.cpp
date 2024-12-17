@@ -370,7 +370,7 @@ KiSCProtoV2Master::messageReceived(KiSCProtoV2Message* msg, signed int rssi, boo
     if (msg->getCommand() == MSGTYPE_INFO) {
 //    if (msg->isA<KiSCProtoV2Message_Info>()) {
         KiSCProtoV2Message_Info* infoMsg = dynamic_cast<KiSCProtoV2Message_Info*>(msg);
-//        KiSCPeer slave(infoMsg->getSource(), infoMsg->getName(), infoMsg->getRole(), infoMsg->getState(), infoMsg->getType());
+//        KiSCPeer slave(i nfoMsg->getSource(), infoMsg->getName(), infoMsg->getRole(), infoMsg->getState(), infoMsg->getType());
 //        slaves.push_back(slave);
     } else if ((msg->getCommand() == MSGTYPE_NETWORK) || (msg->getCommand() == MSGTYPE_NETWORK_JOIN) || (msg->getCommand() == MSGTYPE_NETWORK_LEAVE) || (msg->getCommand() == MSGTYPE_NETWORK_ACCEPT) || (msg->getCommand() == MSGTYPE_NETWORK_REJECT)) {
 //    } else if (msg->isA<KiSCProtoV2Message_network>()) {
