@@ -48,6 +48,8 @@ class KiSCProtoV2Message {
         }    
     void            setSource(KiSCAddress source) { this->source = source; }
     void            setTarget(KiSCAddress target) { this->target = target; }
+      KiSCAddress     getSource() { return source; }
+      KiSCAddress     getTarget() { return target; }
  protected:        
     espnowmsg_t     msg;
  private:
@@ -69,6 +71,7 @@ class KiSCPeer {
     KiSCPeer(KiSCAddress address, String name, Role role, State state, SlaveType type) : address(address), lastMsg(0),
             active(false), name(name), role(role), state(state), type(type) {}
 
+    
     KiSCAddress     address;
     uint32_t        lastMsg;
     bool            active;
@@ -91,6 +94,7 @@ class KiSCProtoV2 {
     void                start();
 
     const KiSCPeer&     getPeer() { return peer; }
+    void                send(KiSCProtoV2Message *msg);
  protected:
     bool                init();
 
@@ -99,7 +103,6 @@ class KiSCProtoV2 {
 
     static void         messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
     static void         task(void* param);
-    void                send(KiSCProtoV2Message *msg);
     KiSCAddress         getAddress() { return address; }
     static KiSCProtoV2Message* buildProtoMessage(espnowmsg_t msg);
     virtual void                taskTick100ms();
@@ -128,6 +131,7 @@ class KiSCProtoV2Master : public KiSCProtoV2 {
     explicit                KiSCProtoV2Master(String name);
     void                    taskTick500ms(); 
     static void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
+    void                    addSlave(KiSCPeer slave) { slaves.push_back(slave); }
  private:
     bool                    broadcastActive;
     void                    sendBroadcastOffer();
@@ -139,8 +143,11 @@ class KiSCProtoV2Slave : public KiSCProtoV2 {
  public:
     explicit                KiSCProtoV2Slave(String name);
     void                    setType(KiSCPeer::SlaveType type) { this->type = type; }
-    void                    taskTick500ms(); 
+    void                    taskTick500ms();
     static void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
+    void                   setMaster(KiSCPeer master) { this->master = master; }
+    KiSCPeer*               getMaster() { return &master; }
+    bool                    isMasterFound() { return masterFound; }
  protected:
     static void             dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast);
  private:
@@ -158,10 +165,15 @@ class KiSCProtoV2Message_Info : public KiSCProtoV2Message {
     void                buildBufferedMessage() override;
     virtual void        dump();
     void                setName(String name) { this->name = name; }
+    String              getName() { return name; }
     void                setRole(KiSCPeer::Role role) { this->role = role; }
     void                setState(KiSCPeer::State state) { this->state = state; }
     void                setType(KiSCPeer::SlaveType type) { this->type = type; }
-    static void             messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
+    KiSCPeer::Role      getRole() { return role; }
+    KiSCPeer::State     getState() { return state; }
+    KiSCPeer::SlaveType getType() { return type; }
+
+    static void         messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast);
  private:
     String              name;
     KiSCPeer::Role      role;
@@ -178,8 +190,11 @@ class KiSCProtoV2Message_network : public KiSCProtoV2Message {
     void                buildBufferedMessage() override;
     virtual void        dump();
     void                setSubCommand(uint8_t subCommand) { this->subCommand = subCommand; }
+    uint8_t             getSubCommand() { return subCommand; }
+    void                setJoinRequest() { subCommand = 0x01; }
+    void                setAcceptResponse() { subCommand = 0x02; }
  private:
-    uint8_t             subCommand = MSGTYPE_NETWORK;      
+    uint8_t             subCommand = 0x00;
 };
 //extern KiSCProtoV2 *kiscprotoV2;
 
