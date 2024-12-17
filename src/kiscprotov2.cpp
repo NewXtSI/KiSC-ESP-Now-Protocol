@@ -57,6 +57,14 @@ KiSCProtoV2::dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed i
     if (kiscmsg != nullptr) {
         DBGLOG(Debug, "KiSCProtoV2.dataReceived: Message built");
         messageReceived(kiscmsg, rssi, broadcast);
+    } else {
+        char line[255];
+        sprintf(line, "Payload: %d", msg.payload_len);
+        for (int i=0; i<msg.payload_len; i++) {
+            sprintf(line, "%s %02X", line, msg.payload[i]);
+        }
+        DBGLOG(Warning, line);
+
     }
 }
 
@@ -429,11 +437,11 @@ KiSCProtoV2Message_Info::buildFromBuffer() {
 
 void
 KiSCProtoV2Message_Info::dump() {
-    DBGLOG(Debug, "From %02X %02X %02X %02X %02X %02X", source.getAddress()[0], source.getAddress()[1], source.getAddress()[2], source.getAddress()[3], source.getAddress()[4], source.getAddress()[5]);
-    DBGLOG(Debug, "To %02X %02X %02X %02X %02X %02X", target.getAddress()[0], target.getAddress()[1], target.getAddress()[2], target.getAddress()[3], target.getAddress()[4], target.getAddress()[5]);
-    DBGLOG(Debug, "  Name: %s", name.c_str());
-    DBGLOG(Debug, "  Role: %d", role);
-    DBGLOG(Debug, "  State: %d", state);
+    DBGLOG(Verbose, "From %02X %02X %02X %02X %02X %02X", source.getAddress()[0], source.getAddress()[1], source.getAddress()[2], source.getAddress()[3], source.getAddress()[4], source.getAddress()[5]);
+    DBGLOG(Verbose, "To %02X %02X %02X %02X %02X %02X", target.getAddress()[0], target.getAddress()[1], target.getAddress()[2], target.getAddress()[3], target.getAddress()[4], target.getAddress()[5]);
+    DBGLOG(Verbose, "  Name: %s", name.c_str());
+    DBGLOG(Verbose, "  Role: %d", role);
+    DBGLOG(Verbose, "  State: %d", state);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -462,11 +470,15 @@ void
 KiSCProtoV2Message_network::buildBufferedMessage() {
     DBGLOG(Debug, "KiSCProtoV2Message_network.buildBufferedMessage()");
     KiSCProtoV2Message::buildBufferedMessage();
+    memcpy(msg.dstAddress, target.getAddress(), sizeof(msg.dstAddress));
     msg.payload[0] = PROTO_VERSION;
     msg.payload[1] = subCommand == 0 ? MSGTYPE_NETWORK : subCommand;
-    msg.payload_len = 2;
+    msg.payload[2] = subCommand;
+    msg.payload_len = 3;
 }
 void
 KiSCProtoV2Message_network::dump() {
-    DBGLOG(Debug, "KiSCProtoV2Message_network.dump()");
+    DBGLOG(Verbose, "  SubCommand: %d", subCommand);
+
+//    DBGLOG(Debug, "KiSCProtoV2Message_network.dump()");
 }
