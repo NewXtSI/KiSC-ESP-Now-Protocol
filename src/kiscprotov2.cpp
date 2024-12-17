@@ -246,6 +246,11 @@ KiSCProtoV2Slave::taskTick500ms() {
     DBGLOG(Debug, "KiSCProtoV2Slave.taskTick500ms()");
     if (!masterFound) {
         KiSCProtoV2Message_Info msg(BroadcastAddress.getAddress());
+        msg.setName(name);
+        msg.setRole(role);
+        msg.setState(state);
+        msg.setType(type);
+
         send(&msg);
     }
 }
@@ -273,6 +278,7 @@ KiSCProtoV2Master::sendBroadcastOffer() {
     msg.setName(name);
     msg.setRole(role);
     msg.setState(state);
+    msg.setType(KiSCPeer::SlaveType::Unidentified);
     DBGLOG(Debug, "KiSCProtoV2Master.sendBroadcastOffer()");
     send(&msg);
 }
@@ -298,14 +304,16 @@ void KiSCProtoV2Message_Info::buildBufferedMessage() {
     // 1: Message Type
     // 2: Rollen ID
     // 3: State
-    // 4-13: Name
+    // 4: Type
+    // 5-13: Name
     
     msg.payload[2] = role;
     msg.payload[3] = state;
+    msg.payload[4] = type;
     for (int i = 0; i < name.length(); i++) {
-        msg.payload[4+i] = name[i];
+        msg.payload[5+i] = name[i];
     }
-    msg.payload_len = 4 + name.length();
+    msg.payload_len = 5 + name.length();
 }
 
 bool

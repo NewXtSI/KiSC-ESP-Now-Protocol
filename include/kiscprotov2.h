@@ -158,10 +158,12 @@ class KiSCProtoV2Message_Info : public KiSCProtoV2Message {
     void           setName(String name) { this->name = name; }
     void           setRole(KiSCPeer::Role role) { this->role = role; }
     void           setState(KiSCPeer::State state) { this->state = state; }
+    void           setType(KiSCPeer::SlaveType type) { this->type = type; }
  private:
     String              name;
     KiSCPeer::Role      role;
-    KiSCPeer::State     state;  
+    KiSCPeer::State     state;
+    KiSCPeer::SlaveType type;
 };
 
 #endif  /* INCLUDE_KISCPROTOV2_INCLUDED */
