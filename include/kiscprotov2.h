@@ -74,7 +74,18 @@ class KiSCPeer {
     KiSCPeer(KiSCAddress address, String name, Role role, State state, SlaveType type) : address(address), lastMsg(0),
             active(false), name(name), role(role), state(state), type(type) {}
 
-    
+    static String getTypeDesc(SlaveType type) {
+        switch (type) {
+            case Unidentified: return "Unidentified";
+            case Controller: return "Controller";
+            case Motor: return "Motor";
+            case Light: return "Light";
+            case Sound: return "Sound";
+            case BTAudio: return "BTAudio";
+            case Display: return "Display";
+            case Peripheral: return "Peripheral";
+        }
+    }
     KiSCAddress     address;
     uint32_t        lastMsg;
     bool            active;
@@ -85,16 +96,21 @@ class KiSCPeer {
     SlaveType       type;
 };
 
-typedef std::function<void (KiSCAddress address, KiSCProtoV2Message msg, signed int rssi, bool broadcast)> rcvdMsgCallback;
+//typedef std::function<void (KiSCAddress address, KiSCProtoV2Message msg, signed int rssi, bool broadcast)> rcvdMsgCallback;
+
+typedef std::function<void ()> rcvdMsgCallback;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class KiSCProtoV2 {
  public:
                         KiSCProtoV2(String name, KiSCPeer::Role role);
 
-    void                onReceived(rcvdMsgCallback callback) { rcvdMsg = callback; }
-
+    void                onData(rcvdMsgCallback callback) { rcvdMsg = callback; }
+    void                onNetwork(rcvdMsgCallback callback) { rcvdNetworkMsg = callback; }  
     void                start();
+
+    virtual void        dumpNetwork() = 0;
+
 
     const KiSCPeer&     getPeer() { return peer; }
     void                send(KiSCProtoV2Message *msg);
@@ -105,17 +121,19 @@ class KiSCProtoV2 {
     static void         dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast);
 
     virtual void         messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer = true);
-    static void         task(void* param);
-    KiSCAddress         getAddress() { return address; }
+    static void          task(void* param);
+    KiSCAddress          getAddress() { return address; }
     static KiSCProtoV2Message* buildProtoMessage(espnowmsg_t msg);
-    virtual void                taskTick100ms();
-    virtual void                taskTick500ms();
-    virtual void                taskTick1s();
+    virtual void         taskTick100ms();
+    virtual void         taskTick500ms();
+    virtual void         taskTick1s();
  protected:    
     String              name;
     KiSCPeer::State     state = KiSCPeer::Unknown;
     KiSCPeer::Role      role;
     SemaphoreHandle_t   mutex;
+        rcvdMsgCallback     rcvdMsg = nullptr;
+    rcvdMsgCallback     rcvdNetworkMsg = nullptr;
  private:
     static QueueHandle_t  sendQueue;
 
@@ -125,7 +143,7 @@ class KiSCProtoV2 {
 
     const uint8_t       queueSize = 10;
     KiSCPeer            peer;
-    rcvdMsgCallback     rcvdMsg = nullptr;
+
     KiSCAddress         address;
 };
 
@@ -138,6 +156,7 @@ class KiSCProtoV2Master : public KiSCProtoV2 {
     void                    addSlave(KiSCPeer* slave);
     void                    taskTick1s();
     bool                    canAdd(KiSCPeer slave);
+    virtual void            dumpNetwork();
  private:
     bool                    broadcastActive;
     uint32_t                broadcastStart;
@@ -156,6 +175,7 @@ class KiSCProtoV2Slave : public KiSCProtoV2 {
     void                   setMaster(KiSCPeer master) { this->master = master; masterFound = true; }
     KiSCPeer*               getMaster() { return &master; }
     bool                    isMasterFound() { return masterFound; }
+    virtual void            dumpNetwork();
  protected:
 //    static void             dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast);
  private:

@@ -129,11 +129,13 @@ KiSCProtoV2::buildProtoMessage(espnowmsg_t msg) {
     return nullptr;
 }
 
+#undef DUMP_MESSAGES
+
 void         
 KiSCProtoV2::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer) {
     DBGLOG(Debug, "KiSCProtoV2.messageReceived");
     msg->buildFromBuffer();
-
+#if DUMP_MESSAGES
     if (msg->getCommand() == MSGTYPE_INFO) {
 //    if (msg->isA<KiSCProtoV2Message_Info>()) {
         KiSCProtoV2Message_Info* infoMsg = dynamic_cast<KiSCProtoV2Message_Info*>(msg);
@@ -149,6 +151,7 @@ KiSCProtoV2::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broa
     } else {
         DBGLOG(Error, "Unknown message type");
     }
+#endif    
     if (delBuffer)
         delete msg;
 }
@@ -307,6 +310,22 @@ KiSCProtoV2Slave::KiSCProtoV2Slave(String name) : KiSCProtoV2(name, KiSCPeer::Sl
     DBGLOG(Debug, "KiSCProtoV2Slave()");
 }
 
+void        
+KiSCProtoV2Slave::dumpNetwork() {
+/*
+    DBGLOG(Info, "This is master: %s (%02X:%02X:%02X:%02X:%02X:%02X)", name.c_str(), getAddress().getAddress()[0], getAddress().getAddress()[1], getAddress().getAddress()[2], getAddress().getAddress()[3], getAddress().getAddress()[4], getAddress().getAddress()[5]);
+    for (KiSCPeer *slave : slaves) {
+        DBGLOG(Info, "  Slave %s (%02X:%02X:%02X:%02X:%02X:%02X)", slave->name.c_str(), slave->address.getAddress()[0], slave->address.getAddress()[1], slave->address.getAddress()[2], slave->address.getAddress()[3], slave->address.getAddress()[4], slave->address.getAddress()[5]);
+    }
+*/
+    DBGLOG(Info, "This is slave: %s (%02X:%02X:%02X:%02X:%02X:%02X) Typ: %s", name.c_str(), getAddress().getAddress()[0], getAddress().getAddress()[1], getAddress().getAddress()[2], getAddress().getAddress()[3], getAddress().getAddress()[4], getAddress().getAddress()[5], KiSCPeer::getTypeDesc(type).c_str());
+    if (masterFound) {
+        DBGLOG(Info, "  Master %s (%02X:%02X:%02X:%02X:%02X:%02X)", master.name.c_str(), master.address.getAddress()[0], master.address.getAddress()[1], master.address.getAddress()[2], master.address.getAddress()[3], master.address.getAddress()[4], master.address.getAddress()[5]);
+    } else {
+        DBGLOG(Info, "  No master found");
+    }
+}
+
 void
 KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer) {
     KiSCProtoV2::messageReceived(msg, rssi, broadcast, false);
@@ -335,6 +354,9 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
                 if (infoMsg->getName() != master.name) {
                     DBGLOG(Info, "Master name changed to: %s", infoMsg->getName().c_str());
                     master.name = infoMsg->getName();
+                    if (rcvdNetworkMsg != nullptr) {
+                        rcvdNetworkMsg();
+                    }
                 }
 //                (dynamic_cast<KiSCProtoV2Slave*>(kiscprotoV2))->getMaster()->name = infoMsg->getName();
             }
@@ -350,7 +372,11 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
                 _master.address = networkMsg->getSource();
                 _master.lastMsg = millis();
                 _master.active = true;
+                _master.name = networkMsg->getName();
                 dynamic_cast<KiSCProtoV2Slave*>(kiscprotoV2)->setMaster(_master);
+                if (rcvdNetworkMsg != nullptr) {
+                    rcvdNetworkMsg();
+                }
             }
         }
     } else {
@@ -368,6 +394,9 @@ KiSCProtoV2Slave::taskTick1s() {
         if (millis() - master.lastMsg > 10000) {
             DBGLOG(Warning, "Master not responding");
             masterFound = false;
+            if (rcvdNetworkMsg != nullptr) {
+                rcvdNetworkMsg();
+            }
         } else {
             KiSCProtoV2Message_Info msg(master.address.getAddress());
             msg.setName(name);
@@ -406,6 +435,14 @@ KiSCProtoV2Master::KiSCProtoV2Master(String name) : KiSCProtoV2(name, KiSCPeer::
     broadcastStart = millis();
 }
 
+void        
+KiSCProtoV2Master::dumpNetwork() {
+    DBGLOG(Info, "This is master: %s (%02X:%02X:%02X:%02X:%02X:%02X)", name.c_str(), getAddress().getAddress()[0], getAddress().getAddress()[1], getAddress().getAddress()[2], getAddress().getAddress()[3], getAddress().getAddress()[4], getAddress().getAddress()[5]);
+    for (KiSCPeer *slave : slaves) {
+        DBGLOG(Info, "  Slave %s (%02X:%02X:%02X:%02X:%02X:%02X) Type: %s", slave->name.c_str(), slave->address.getAddress()[0], slave->address.getAddress()[1], slave->address.getAddress()[2], slave->address.getAddress()[3], slave->address.getAddress()[4], slave->address.getAddress()[5], KiSCPeer::getTypeDesc(slave->type).c_str());
+    }
+}
+
 void
 KiSCProtoV2Master::taskTick1s() {
     KiSCProtoV2::taskTick1s();
@@ -427,8 +464,16 @@ KiSCProtoV2Master::taskTick1s() {
             send(&msg);
         }
     }
+    int numSlaves = slaves.size();
+
     // Check for offline peers and remove them and delete added pointer
     slaves.erase(std::remove_if(slaves.begin(), slaves.end(), [](KiSCPeer *slave) { return !slave->active; }), slaves.end());
+
+    if (numSlaves != slaves.size()) {
+        if (rcvdNetworkMsg != nullptr) {
+            rcvdNetworkMsg();
+        }
+    }
 
 
 //    slaves.erase(std::remove_if(slaves.begin(), slaves.end(), [](KiSCPeer *slave) { return !slave->active; }), slaves.end());
@@ -511,6 +556,9 @@ KiSCProtoV2Master::messageReceived(KiSCProtoV2Message* msg, signed int rssi, boo
                 DBGLOG(Debug, "Slave added %02X %02X %02X %02X %02X %02X", _slave.address.getAddress()[0], _slave.address.getAddress()[1], _slave.address.getAddress()[2], _slave.address.getAddress()[3], _slave.address.getAddress()[4], _slave.address.getAddress()[5]);
                 dynamic_cast<KiSCProtoV2Master*>(kiscprotoV2)->addSlave(new KiSCPeer(_slave));
                 acceptMsg.setAcceptResponse();
+                if (rcvdNetworkMsg != nullptr) {
+                    rcvdNetworkMsg();
+                }
             } else {
                 DBGLOG(Warning, "Slave not added %02X %02X %02X %02X %02X %02X", _slave.address.getAddress()[0], _slave.address.getAddress()[1], _slave.address.getAddress()[2], _slave.address.getAddress()[3], _slave.address.getAddress()[4], _slave.address.getAddress()[5]);
                 acceptMsg.setRejectResponse();
