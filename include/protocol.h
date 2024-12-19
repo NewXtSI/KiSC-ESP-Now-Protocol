@@ -118,7 +118,13 @@ typedef struct {
 
     int16_t     ypr[3];
     int16_t     acc[3];
+    bool        nfcCardActive;
+    char        nfcCardUID[20];
+    
+    bool        servoPowerActive;
 
+    uint16_t    ambientLight;
+    uint32_t    subsystemStatus;
 } KiSCPeripheralFeedbackMessage;
 
 typedef struct {
