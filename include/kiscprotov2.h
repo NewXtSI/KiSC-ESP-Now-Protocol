@@ -8,6 +8,19 @@
 
 #include <vector>
 
+#define PROTO_VERSION   0x20
+
+#define MSGTYPE_INFO            0x01
+#define MSGTYPE_NETWORK         0x10
+#define MSGTYPE_NETWORK_JOIN    0x11
+#define MSGTYPE_NETWORK_LEAVE   0x12
+#define MSGTYPE_NETWORK_ACCEPT  0x13
+#define MSGTYPE_NETWORK_REJECT  0x14
+
+#define MSGTYPE_BT_AUDIO        0x20
+#define MSGTYPE_BT_AUDIO_INFO   0x21
+#define MSGTYPE_BT_AUDIO_CTRL   0x22
+
 typedef struct {
     uint8_t dstAddress[6]; /**< Message topic*/
     uint8_t srcAddress[6]; /**< Message topic*/
@@ -17,12 +30,31 @@ typedef struct {
 
 class KiSCBTAudioData {
  public:
-   
+    bool isDirtyToMaster() { return dirtyToMaster; }
+    bool isDirtyFromMaster() { return dirtyFromMaster; }
+    void setDirtyFromMaster(bool dirty) { dirtyFromMaster = dirty; }
+   void setDirtyToMaster(bool dirty) { dirtyToMaster = dirty; }
+
+    void setConnected(bool connected) { btConnected = connected; dirtyToMaster = true; }
+    void setTitle(String title) { sTitle = title; dirtyToMaster = true; }
+    void setArtist(String artist) { sArtist = artist; dirtyToMaster = true; }
+    void setAlbum(String album) { sAlbum = album; dirtyToMaster = true; }
+ private:
+    // Variables from Slave
+    bool          btConnected;
+    String        sTitle;
+      String        sArtist;
+      String        sAlbum;
+      String        sGenre;
+      
+    // Variables from Master
+    bool dirtyToMaster = false;
+    bool dirtyFromMaster = false;
 };
 
 class KiSCData {
  public:
-   KiSCBTAudioData btAudioData;
+    KiSCBTAudioData btAudioData;
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class KiSCAddress {
@@ -125,7 +157,7 @@ class KiSCProtoV2 {
     const KiSCPeer&     getPeer() { return peer; }
     void                send(KiSCProtoV2Message *msg);
 
-    KiSCData            data; 
+    KiSCData            data;
  protected:
     bool                init();
 
@@ -136,6 +168,8 @@ class KiSCProtoV2 {
     static void          task(void* param);
     KiSCAddress          getAddress() { return address; }
     static KiSCProtoV2Message* buildProtoMessage(espnowmsg_t msg);
+    virtual void         checkDirtyData();
+    virtual void         taskTick10ms();
     virtual void         taskTick100ms();
     virtual void         taskTick500ms();
     virtual void         taskTick1s();
@@ -189,6 +223,7 @@ class KiSCProtoV2Slave : public KiSCProtoV2 {
     bool                    isMasterFound() { return masterFound; }
     virtual void            dumpNetwork();
  protected:
+    void                   checkDirtyData();
 //    static void             dataReceived(uint8_t* address, uint8_t* data, uint8_t len, signed int rssi, bool broadcast);
  private:
     KiSCPeer::SlaveType     type = KiSCPeer::Unidentified;
@@ -253,23 +288,11 @@ class KiSCProtoV2Message_BTAudio : public KiSCProtoV2Message {
     virtual bool        buildFromBuffer();
     void                buildBufferedMessage() override;
     virtual void        dump();
- private:
     uint8_t             subCommand = 0x20;
+ private:
 };
 
 //extern KiSCProtoV2 *kiscprotoV2;
 
-#define PROTO_VERSION   0x20
-
-#define MSGTYPE_INFO            0x01
-#define MSGTYPE_NETWORK         0x10
-#define MSGTYPE_NETWORK_JOIN    0x11
-#define MSGTYPE_NETWORK_LEAVE   0x12
-#define MSGTYPE_NETWORK_ACCEPT  0x13
-#define MSGTYPE_NETWORK_REJECT  0x14
-
-#define MSGTYPE_BT_AUDIO        0x20
-#define MSGTYPE_BT_AUDIO_INFO   0x21
-#define MSGTYPE_BT_AUDIO_CTRL   0x22
 
 #endif  /* INCLUDE_KISCPROTOV2_INCLUDED */

@@ -188,6 +188,7 @@ KiSCProtoV2::init() {
 void
 KiSCProtoV2::task(void* param) {
     KiSCProtoV2* proto = (KiSCProtoV2*)param;
+    uint32_t last10ms = millis();
     uint32_t last100ms = millis();
     uint32_t last500ms = millis();
     uint32_t last1s = millis();
@@ -198,6 +199,11 @@ KiSCProtoV2::task(void* param) {
             if (xQueueReceive(sendQueue, &msg, 0)) {
                 _sendViaESPNow(msg);
             }
+        }
+        // run 10ms tick every 10ms
+        if (millis() - last10ms > 10) {
+            proto->taskTick10ms();
+            last10ms = millis();
         }
         // run 100ms tick every 100ms
         if (millis() - last100ms > 100) {
@@ -254,7 +260,17 @@ KiSCProtoV2::_sendViaESPNow(espnowmsg_t msg) {
     quickEspNow.send(msg.dstAddress, msg.payload, msg.payload_len);
 }
 
-void                
+void
+KiSCProtoV2::checkDirtyData() {
+
+}
+
+void
+KiSCProtoV2::taskTick10ms() {
+    checkDirtyData();
+}
+
+void
 KiSCProtoV2::taskTick100ms() {
 //    DBGLOG(Debug, "KiSCProtoV2.taskTick100ms()");
 }
@@ -389,6 +405,45 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
     }
     if (delBuffer)
         delete msg;
+}
+
+void
+KiSCProtoV2Slave::checkDirtyData() {
+    KiSCProtoV2::checkDirtyData();
+    static int lastSentMsg = millis();
+    KiSCProtoV2Message *msg = nullptr;
+    switch (type) {
+        case KiSCPeer::SlaveType::Controller:
+            break;
+        case KiSCPeer::SlaveType::Motor:
+            break;
+        case KiSCPeer::SlaveType::Light:
+            break;
+        case KiSCPeer::SlaveType::Sound:
+            break;
+        case KiSCPeer::SlaveType::BTAudio:
+            if (data.btAudioData.isDirtyToMaster() || (millis() - lastSentMsg > 5000)) {    // Bei Änderung oder alle 5 Sekunden
+                KiSCProtoV2Message_BTAudio *_msg = new KiSCProtoV2Message_BTAudio(master.address.getAddress());
+                _msg->subCommand = MSGTYPE_BT_AUDIO_INFO;
+                data.btAudioData.setDirtyToMaster(false);
+                lastSentMsg = millis();
+                msg = _msg;
+            }
+
+            break;
+        case KiSCPeer::SlaveType::Display:
+            break;
+        case KiSCPeer::SlaveType::Peripheral:
+            break;
+        case KiSCPeer::SlaveType::Unidentified:
+            break;
+    }
+    if (msg != nullptr) {
+        send(msg);
+        delete msg;
+        lastSentMsg = millis();
+    }
+
 }
 
 void
