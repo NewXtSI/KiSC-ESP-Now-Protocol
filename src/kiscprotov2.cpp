@@ -221,7 +221,7 @@ KiSCProtoV2::task(void* param) {
             last1s = millis();
         }
 
-        vTaskDelay(1);
+        vTaskDelay(10);
     }
     vTaskDelete(NULL);
 }
@@ -233,7 +233,8 @@ KiSCProtoV2::start() {
     if (init()) {
         state = KiSCPeer::Idle;
         ESPNowSent = true;
-        xTaskCreate(task, "KiSCCommTast", 1024*6, this, 0, NULL);
+        if (xTaskCreatePinnedToCore(task, "KiSCCommTast", 512 * 12, this, 0, NULL, 1) != pdPASS)
+            DBGLOG(Error, "Failed to start KiSCCommTask");
     } else {
         DBGLOG(Error, "Failed to initialize ESPNow");
     }
@@ -350,7 +351,8 @@ KiSCProtoV2Slave::dumpNetwork() {
 void
 KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool broadcast, bool delBuffer) {
     KiSCProtoV2::messageReceived(msg, rssi, broadcast, false);
-    if ((!broadcast) && (msg->getSource() == master.address)) {
+ //   if ((!broadcast) && (msg->getSource() == master.address)) {
+    if ((msg->getSource() == master.address)) {
         master.lastMsg = millis();
     }
     if (msg->getCommand() == MSGTYPE_INFO) {
@@ -410,6 +412,9 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
 void
 KiSCProtoV2Slave::checkDirtyData() {
     KiSCProtoV2::checkDirtyData();
+    if (!masterFound) {
+        return;
+    }
     static int lastSentMsg = millis();
     KiSCProtoV2Message *msg = nullptr;
     switch (type) {
@@ -425,6 +430,17 @@ KiSCProtoV2Slave::checkDirtyData() {
             if (data.btAudioData.isDirtyToMaster() || (millis() - lastSentMsg > 5000)) {    // Bei Änderung oder alle 5 Sekunden
                 KiSCProtoV2Message_BTAudio *_msg = new KiSCProtoV2Message_BTAudio(master.address.getAddress());
                 _msg->subCommand = MSGTYPE_BT_AUDIO_INFO;
+                _msg->setConnected(data.btAudioData.isConnected());
+//                _msg->setPlaying(data.btAudioData.isPlaying());
+                _msg->setAlbum(data.btAudioData.getAlbum());
+                _msg->setArtist(data.btAudioData.getArtist());
+                /*
+                _msg->setTrack(data.btAudioData.getTrack());
+                _msg->setVolume(data.btAudioData.getVolume());
+                _msg->setDuration(data.btAudioData.getDuration());
+                _msg->setPosition(data.btAudioData.getPosition());
+                _msg->setPlaying(data.btAudioData.isPlaying());*/
+                _msg->setTitle(data.btAudioData.getTitle());
                 data.btAudioData.setDirtyToMaster(false);
                 lastSentMsg = millis();
                 msg = _msg;

@@ -177,10 +177,24 @@ KiSCProtoV2Message_BTAudio::buildBufferedMessage() {
     msg.payload[0] = PROTO_VERSION;
     msg.payload[1] = MSGTYPE_BT_AUDIO;
     msg.payload[2] = subCommand;
-    msg.payload_len = 3;
+    msg.payload[3] = btConnected;
+    // Add title, artist, album with maximum length of 20 characters each
+    for (int i = 0; i < 20; i++) {
+        msg.payload[4+i] = title[i];
+    }
+    for (int i = 0; i < 20; i++) {
+        msg.payload[24+i] = artist[i];
+    }
+    for (int i = 0; i < 20; i++) {
+        msg.payload[44+i] = album[i];
+    }
+    for (int i = 0; i < 20; i++) {
+        msg.payload[64+i] = genre[i];
+    }
+    msg.payload_len = 84;
 }
 
-void        
+void
 KiSCProtoV2Message_BTAudio::dump() {
     switch (subCommand) {
         case MSGTYPE_BT_AUDIO_INFO:

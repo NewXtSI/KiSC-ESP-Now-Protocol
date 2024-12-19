@@ -39,6 +39,12 @@ class KiSCBTAudioData {
     void setTitle(String title) { sTitle = title; dirtyToMaster = true; }
     void setArtist(String artist) { sArtist = artist; dirtyToMaster = true; }
     void setAlbum(String album) { sAlbum = album; dirtyToMaster = true; }
+
+    bool isConnected() { return btConnected; }
+      String getTitle() { return sTitle; }
+      String getArtist() { return sArtist; }
+      String getAlbum() { return sAlbum; }
+
  private:
     // Variables from Slave
     bool          btConnected;
@@ -187,7 +193,7 @@ class KiSCProtoV2 {
 
     static bool         ESPNowSent;
 
-    const uint8_t       queueSize = 10;
+    const uint8_t       queueSize = 4;
     KiSCPeer            peer;
 
     KiSCAddress         address;
@@ -289,7 +295,18 @@ class KiSCProtoV2Message_BTAudio : public KiSCProtoV2Message {
     void                buildBufferedMessage() override;
     virtual void        dump();
     uint8_t             subCommand = 0x20;
+      void                setConnected(bool connected) { this->btConnected = connected; }
+      void                setTitle(String title) { this->title = title; }
+      void                setArtist(String artist) { this->artist = artist; }
+      void                setAlbum(String album) { this->album = album; }
+      void                setGenre(String genre) { this->genre = genre; }
  private:
+    String              title;
+    String              artist;
+    String              album;
+    String              genre;
+    bool                btConnected;
+
 };
 
 //extern KiSCProtoV2 *kiscprotoV2;
