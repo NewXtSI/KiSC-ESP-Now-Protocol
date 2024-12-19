@@ -15,6 +15,15 @@ typedef struct {
     size_t payload_len; /**< Payload length*/
 } espnowmsg_t;
 
+class KiSCBTAudioData {
+ public:
+   
+};
+
+class KiSCData {
+ public:
+   KiSCBTAudioData btAudioData;
+};
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class KiSCAddress {
  public:
@@ -85,6 +94,7 @@ class KiSCPeer {
             case Display: return "Display";
             case Peripheral: return "Peripheral";
         }
+        return "Unknown";
     }
     KiSCAddress     address;
     uint32_t        lastMsg;
@@ -114,6 +124,8 @@ class KiSCProtoV2 {
 
     const KiSCPeer&     getPeer() { return peer; }
     void                send(KiSCProtoV2Message *msg);
+
+    KiSCData            data; 
  protected:
     bool                init();
 

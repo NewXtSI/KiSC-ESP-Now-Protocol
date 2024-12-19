@@ -13,6 +13,11 @@
 
 #include <QuickEspNow.h>
 
+#define     DEBUG_OUTPUTENABLED      0
+#define     DEBUG_OUTPUTDISABLED     1
+
+#define     DEBUG_OUTPUT_RAW_PACKAGES   DEBUG_OUTPUTENABLED
+
 KiSCAddress BroadcastAddress(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
 bool KiSCProtoV2::ESPNowSent = true;
@@ -47,7 +52,7 @@ void hexdump(void *ptr, int buflen, bool in) {
     for (j=0; j<16; j++) 
       if (i+j < buflen)
         sprintf(line,"%s%c", line,isprint(buf[i+j]) ? buf[i+j] : '.');
-     DBGLOG(Debug, line);
+     DBGCHK(Info, DEBUG_OUTPUT_RAW_PACKAGES, line);
   }
 }
 
@@ -341,7 +346,7 @@ KiSCProtoV2Slave::messageReceived(KiSCProtoV2Message* msg, signed int rssi, bool
                 KiSCProtoV2Message_network joinMsg(infoMsg->getSource().getAddress());
                 joinMsg.setJoinRequest();
                 joinMsg.setName(name);
-                joinMsg,setType(type);
+                joinMsg.setType(type);
                 kiscprotoV2->send(&joinMsg);
                 DBGLOG(Info, "Join request sent to %02X %02X %02X %02X %02X %02X", infoMsg->getSource().getAddress()[0], infoMsg->getSource().getAddress()[1], infoMsg->getSource().getAddress()[2], infoMsg->getSource().getAddress()[3], infoMsg->getSource().getAddress()[4], infoMsg->getSource().getAddress()[5]);
             } else {
