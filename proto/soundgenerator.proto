@@ -1,1 +1,3 @@
 // Soundgenerator Messages 
+
+syntax = "proto3";

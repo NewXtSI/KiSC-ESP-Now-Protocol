@@ -5,8 +5,13 @@
 #include <ESP32Logger.h>
 #endif
 
+#if PROTOBUF_USE_BT_AUDIO
 BluetoothAudioMessage _bam = BluetoothAudioMessage_init_zero;
 BluetoothAudioControlMessage _bacm = BluetoothAudioControlMessage_init_zero;
+#endif
+#if PROTOBUF_USE_REMOTE_CONTROL
+RemotecontrolMessage _rcm = RemotecontrolMessage_init_zero;
+#endif
 
 /// general buffer for msg sender
 uint8_t send_buffer[256];
@@ -20,8 +25,13 @@ std::map<uint32_t, std::string> amp;
 void saveReceiver(const uint8_t *macAddr);
 
 KiSCProto::KiSCProto() {
+#if PROTOBUF_USE_BT_AUDIO    
     _pBluetoothAudioMessageCallbacks = nullptr;
     _pBluetoothAudioControlMessageCallbacks = nullptr;
+#endif
+#if PROTOBUF_USE_REMOTE_CONTROL
+    _pRemotecontrolMessageCallbacks = nullptr;
+#endif
 
     uint32_t chipId = 0;
     #ifdef ARDUINO_ARCH_ESP32
@@ -31,7 +41,7 @@ KiSCProto::KiSCProto() {
     #endif
     _ESP_ID = String(chipId, HEX);    
 }
-
+#if PROTOBUF_USE_BT_AUDIO
 void 
 KiSCProto::setBluetoothAudioMessageCallbacks(BluetoothAudioMessageCallbacks* pCallbacks) {
     _pBluetoothAudioMessageCallbacks = pCallbacks;
@@ -41,7 +51,13 @@ void
 KiSCProto::setBluetoothAudioControlMessageCallbacks(BluetoothAudioControlMessageCallbacks* pCallbacks) {
     _pBluetoothAudioControlMessageCallbacks = pCallbacks;
 }
-
+#endif
+#if PROTOBUF_USE_REMOTE_CONTROL
+void
+KiSCProto::setRemotecontrolMessageCallbacks(RemotecontrolMessageCallbacks* pCallbacks) {
+    _pRemotecontrolMessageCallbacks = pCallbacks;
+}
+#endif
 uint32_t getReceiverId(const uint8_t *macAddr){
     return macAddr[0]+macAddr[1]+macAddr[2]+macAddr[3]+macAddr[4]+macAddr[5];
 }
@@ -83,7 +99,7 @@ void printBuffer(uint8_t *buffer, uint32_t length) {
 #endif
 //    Serial.println();
 }
-
+#if PROTOBUF_USE_BT_AUDIO
 bool KiSCProto::sendBluetoothAudioMessage(BluetoothAudioMessage bam) {
     DBGLOG(Verbose, "Sending Bluetooth Audio Message");
     return sendMessage(encodeBluetoothAudioMessage(bam));
@@ -92,11 +108,51 @@ bool KiSCProto::sendBluetoothAudioMessage(BluetoothAudioMessage bam) {
 bool KiSCProto::sendBluetoothAudioControlMessage(BluetoothAudioControlMessage bacm) {
     return sendMessage(encodeBluetoothAudioControlMessage(bacm));
 }
+#endif
+#if PROTOBUF_USE_REMOTE_CONTROL
+bool KiSCProto::sendRemotecontrolMessage(RemotecontrolMessage rcm) {
+    return sendMessage(encodeRemotecontrolMessage(rcm));
+}
+#endif
+#if PROTOBUF_USE_BT_AUDIO
+typedef struct
+{   char text[32]; } callback_context_t;
+
+bool encode_string(pb_ostream_t* stream, const pb_field_t* field, void* const* arg)
+{
+    // ...and you always cast to the same pointer type, reducing
+    // the chance of mistakes
+    callback_context_t * ctx = (callback_context_t *)(*arg);
+
+    if (!pb_encode_tag_for_field(stream, field))
+        return false;
+
+    return pb_encode_string(stream, (uint8_t*)ctx->text, strlen(ctx->text));
+}
+
+bool 
+KiSCProto::setBluetoothAudioMessageArtist(BluetoothAudioMessage bam, const char *artist) {
+    callback_context_t ctx;    
+    strncpy(ctx.text, artist, 32);
+    bam.bta.arg = &ctx;
+    bam.bta.funcs.encode = &encode_string;
+    return true;
+}
+
+bool 
+KiSCProto::setBluetoothAudioMessageTitle(BluetoothAudioMessage bam, const char *title) {
+    callback_context_t ctx;    
+    strncpy(ctx.text, title, 32);
+    bam.bts.arg = &ctx;
+    bam.bts.funcs.encode = &encode_string;
+    return true;
+}
 
 size_t KiSCProto::encodeBluetoothAudioMessage(BluetoothAudioMessage bam) {
     DBGLOG(Verbose, "Encoding Bluetooth Audio Message");
-    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer, sizeof(send_buffer));
+    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
     bool status = pb_encode(&stream, BluetoothAudioMessage_fields, &bam);
+    send_buffer[0] = MSG_TYPE_BLUETOOTH_AUDIO_MESSAGE;
     #ifndef ARDUINO_ARCH_ESP32
     delay(5); // ESP8266 needs it or die
     #endif
@@ -106,12 +162,13 @@ size_t KiSCProto::encodeBluetoothAudioMessage(BluetoothAudioMessage bam) {
 //        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
         return 0;
     }
-    return message_length;
+    return message_length+1;
 }
 
 size_t KiSCProto::encodeBluetoothAudioControlMessage(BluetoothAudioControlMessage bacm) {
-    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer, sizeof(send_buffer));
+    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
     bool status = pb_encode(&stream, BluetoothAudioControlMessage_fields, &bacm);
+    send_buffer[0] = MSG_TYPE_BLUETOOTH_AUDIO_CONTROL_MESSAGE;
     #ifndef ARDUINO_ARCH_ESP32
     delay(5); // ESP8266 needs it or die
     #endif
@@ -120,13 +177,31 @@ size_t KiSCProto::encodeBluetoothAudioControlMessage(BluetoothAudioControlMessag
 //        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
         return 0;
     }
-    return message_length;
+    return message_length+1;
 }
-
+#endif
+#if PROTOBUF_USE_REMOTE_CONTROL
+size_t KiSCProto::encodeRemotecontrolMessage(RemotecontrolMessage rcm) {
+    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
+    bool status = pb_encode(&stream, RemotecontrolMessage_fields, &rcm);
+    send_buffer[0] = MSG_TYPE_REMOTECONTROL_MESSAGE;
+    #ifndef ARDUINO_ARCH_ESP32
+    delay(5); // ESP8266 needs it or die
+    #endif
+    size_t message_length = stream.bytes_written;
+    if (!status) {
+//        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
+        return 0;
+    }
+    return message_length+1;
+}
+#endif
+#if PROTOBUF_USE_BT_AUDIO
 bool BluetoothAudioMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
     bool status = pb_decode(&stream, BluetoothAudioMessage_fields, &_bam);
     if (!status) {
+        DBGLOG(Error, "Decoding bluetooth audio msg failed: %s", PB_GET_ERROR(&stream));
 //        if(joystick.devmode) printf("Decoding bluetooth audio msg failed: %s\r\n", PB_GET_ERROR(&stream));
         return false;
     }
@@ -148,18 +223,41 @@ bool BluetoothAudioControlMessageDecodeMessage(uint16_t message_length) {
     }
     return true;
 }
+#endif
+#if PROTOBUF_USE_REMOTE_CONTROL
+bool RemotecontrolMessageDecodeMessage(uint16_t message_length) {
+    pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
+    bool status = pb_decode(&stream, RemotecontrolMessage_fields, &_rcm);
+    if (!status) {
+//        if(joystick.devmode) printf("Decoding remote control msg failed: %s\r\n", PB_GET_ERROR(&stream));
+        return false;
+    }
+    if (kiscproto._pRemotecontrolMessageCallbacks != nullptr) {
+        kiscproto._pRemotecontrolMessageCallbacks->onRemotecontrolMessage(_rcm);
+    }
+    return true;
+}
+#endif
 
 void
 KiSCProto::reportError(const char *msg) {
 //    if (devmode) Serial.println(msg);
+#if PROTOBUF_USE_BT_AUDIO
     if (_pBluetoothAudioMessageCallbacks != nullptr) {
         _pBluetoothAudioMessageCallbacks->onError(msg);
     }
     if (_pBluetoothAudioControlMessageCallbacks != nullptr) {
         _pBluetoothAudioControlMessageCallbacks->onError(msg);
     }
+#endif
+#if PROTOBUF_USE_REMOTE_CONTROL    
+    if (_pRemotecontrolMessageCallbacks != nullptr) {
+        _pRemotecontrolMessageCallbacks->onError(msg);
+    }
+#endif    
 }
 
+#if PROTOBUF_USE_BT_AUDIO
 BluetoothAudioMessage KiSCProto::newBluetoothAudioMessage() {
     BluetoothAudioMessage bam = BluetoothAudioMessage_init_zero;
     return bam;
@@ -169,39 +267,50 @@ BluetoothAudioControlMessage KiSCProto::newBluetoothAudioControlMessage() {
     BluetoothAudioControlMessage bacm = BluetoothAudioControlMessage_init_zero;
     return bacm;
 }
-
-#ifdef ARDUINO_ARCH_ESP32
-void BluetoothAudioControlMessageRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
-#else
-void BluetoothAudioControlMessageRecvCallback(uint8_t *macAddr, uint8_t *data, uint8_t dataLen) {
 #endif
+#if PROTOBUF_USE_REMOTE_CONTROL
+RemotecontrolMessage KiSCProto::newRemotecontrolMessage() {
+    RemotecontrolMessage rcm = RemotecontrolMessage_init_zero;
+    return rcm;
+}
+#endif
+void UniversalMessageRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
     saveReceiver(macAddr);
     #ifdef ARDUINO_ARCH_ESP32
-    int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
+    int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen-1);
     #else
-    int msgLen = dataLen;
+    int msgLen = dataLen-1;
     #endif
-    memcpy(recv_buffer, data, msgLen); 
-    BluetoothAudioControlMessageDecodeMessage(msgLen);
+    uint8_t msgType = data[0];
+    memcpy(recv_buffer, data+1, msgLen); 
+    switch (msgType) {
+#if PROTOBUF_USE_BT_AUDIO        
+        case MSG_TYPE_BLUETOOTH_AUDIO_MESSAGE:
+            if (kiscproto._pBluetoothAudioMessageCallbacks != nullptr) {
+                BluetoothAudioMessageDecodeMessage(msgLen);
+            }
+            break;
+        case MSG_TYPE_BLUETOOTH_AUDIO_CONTROL_MESSAGE:
+            if (kiscproto._pBluetoothAudioControlMessageCallbacks != nullptr) {
+                BluetoothAudioControlMessageDecodeMessage(msgLen);
+            }
+            break;
+#endif
+#if PROTOBUF_USE_REMOTE_CONTROL            
+        case MSG_TYPE_REMOTECONTROL_MESSAGE:
+            if (kiscproto._pRemotecontrolMessageCallbacks != nullptr) {
+                RemotecontrolMessageDecodeMessage(msgLen);
+            }
+            break;
+#endif
+        default:
+            break;            
+    }
+//    RemotecontrolMessageDecodeMessage(msgLen);
 //    if (joystick.devmode) printMacAddress(macAddr);
 }
 
-#ifdef ARDUINO_ARCH_ESP32
-void BluetoothAudioMessageRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
-#else
-void BluetoothAudioMessageRecvCallback(uint8_t *macAddr, uint8_t *data, uint8_t dataLen) {
-#endif
-    saveReceiver(macAddr);
-    #ifdef ARDUINO_ARCH_ESP32
-    int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen);
-    #else
-    int msgLen = dataLen;
-    #endif
-    memcpy(recv_buffer, data, msgLen); 
-    BluetoothAudioMessageDecodeMessage(msgLen);
-//    if (joystick.devmode) printMacAddress(macAddr);
-}
-
+#if PROTOBUF_USE_BT_AUDIO
 // callback when data is sent. Not necessary for now. 
 void BluetoothAudioMessageSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
     // if (!joystick.devmode) return;
@@ -213,7 +322,12 @@ void BluetoothAudioMessageSendCallback(const uint8_t *macAddr, esp_now_send_stat
 void BluetoothAudioControlMessageSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
 
 }
+#endif
+#if PROTOBUF_USE_REMOTE_CONTROL
+void RemotecontrolMessageSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
 
+}
+#endif
 bool KiSCProto::sendMessage(uint32_t msglen, const uint8_t *mac) {
     #ifdef ARDUINO_ARCH_ESP32
     esp_now_peer_info_t peerInfo = {};
@@ -358,27 +472,9 @@ KiSCProto::init() {
 #else
         ESP_LOGI("ESPNow", "ESPNow Init Success");
 #endif                
-        if (_pBluetoothAudioMessageCallbacks != nullptr) {
-            esp_now_register_recv_cb(BluetoothAudioMessageRecvCallback);
-#if USE_LOGGER
-            DBGLOG(Info, "Registered Bluetooth Audio Message callback");
-#else
-            ESP_LOGI("ESPNow", "Registered Bluetooth Audio Message callback");
-#endif            
-            esp_now_register_send_cb(BluetoothAudioMessageSendCallback);
-            return true;
-        }
-        else if(_pBluetoothAudioControlMessageCallbacks != nullptr) {
-            esp_now_register_recv_cb(BluetoothAudioControlMessageRecvCallback);
-#if USE_LOGGER
-            DBGLOG(Info, "Registered Bluetooth Audio Control Message callback");
-#else
-            ESP_LOGI("ESPNow", "Registered Bluetooth Audio Control Message callback");
-#endif            
-            esp_now_register_send_cb(BluetoothAudioControlMessageSendCallback);
-            return true;
-        }
-        else {
+        if (1) {
+            esp_now_register_recv_cb(UniversalMessageRecvCallback);
+        } else {
 #if USE_LOGGER
             DBGLOG(Error, "No callbacks registered");
 #else
@@ -389,3 +485,5 @@ KiSCProto::init() {
 
     return true;
 }
+
+

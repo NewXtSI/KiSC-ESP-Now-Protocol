@@ -1,3 +1,8 @@
-import "light.proto"
-import "motor.proto"
-import "btaudio.proto"
+syntax = "proto3";
+
+import public "light.proto";
+import public "motor.proto";
+import public "btaudio.proto";
+import public "soundgenerator.proto";
+import public "remotecontrol.proto";
+

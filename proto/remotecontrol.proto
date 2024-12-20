@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+
+message RemotecontrolMessage {
+    sint32          leftX = 1;  // left joystick x
+    sint32          leftY = 2;  // left joystick y
+    sint32          rightX = 3;  // right joystick x
+    sint32          rightY = 4;  // right joystick y
+    bool            btnA = 5;  // button A
+    bool            btnB = 6;  // button B
+    bool            btnX = 7;  // button X
+    bool            btnY = 8;  // button Y
+    bool            btnL = 9;  // button L
+    bool            btnR = 10;  // button R
+    bool            btnZL = 11;  // button ZL
+    bool            btnZR = 12;  // button ZR
+    bool            btnPlus = 13;  // button Plus
+    bool            btnMinus = 14;  // button Minus
+    bool            btnHome = 15;  // button Home
+    bool            btnO = 16;  // button O
+    bool            btnT = 17;  // button T
+    bool            btndpadup = 18;  // dpad up
+    bool            btndpaddown = 19;  // dpad down
+    bool            btndpadleft = 20;  // dpad left
+    bool            btndpadright = 21;  // dpad right
+
+    bool            connected = 98;  // controller connection status
+    int32           battery = 99;
+    uint32          ck = 100; // check data
+}
