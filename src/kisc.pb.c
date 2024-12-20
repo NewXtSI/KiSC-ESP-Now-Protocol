@@ -9,11 +9,10 @@
 PB_BIND(RemotecontrolMessage, RemotecontrolMessage, AUTO)
 
 
-PB_BIND(BluetoothAudioMessage, BluetoothAudioMessage, AUTO)
+PB_BIND(BluetoothAudioMessage, BluetoothAudioMessage, 2)
 
 
 PB_BIND(BluetoothAudioControlMessage, BluetoothAudioControlMessage, 2)
 
 
 
- 

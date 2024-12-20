@@ -11,37 +11,28 @@
 
 /* Struct definitions */
 typedef struct _RemotecontrolMessage {
-    int32_t ax; /* left stick x position */
-    int32_t ay; /* left stick y position */
-    int32_t az; /* right stick z position */
-    int32_t aw; /* right stick w position */
-    int32_t bA; /* buttonA data */
-    int32_t bB; /* buttonB data */
-    int32_t bX; /* buttonX data */
-    int32_t bY; /* buttonY data */
-    int32_t bL; /* buttonL data */
-    int32_t bR; /* buttonR data */
-    int32_t bU; /* buttonUp data */
-    int32_t bD; /* buttonDown data */
-    uint32_t btl; /* battery level */
-    int32_t ck; /* check data */
+    char dummy_field;
 } RemotecontrolMessage;
 
 typedef struct _BluetoothAudioMessage {
-    uint32_t btl; /* battery level */
-    float btv; /* battery voltage */
-    int32_t x; /* x position */
-    int32_t y; /* y position */
-    int32_t z; /* z position */
-    bool e1; /* event1 data */
-    bool e2; /* event2 data */
-    bool e3; /* event3 data */
-    float t1; /* variable1 data */
-    float t2; /* variable2 data */
+    bool btc; /* bluetooth connection status */
+    bool btp; /* bluetooth play status */
+    pb_callback_t bts; /* bluetooth song title */
+    pb_callback_t bta; /* bluetooth artist */
+    uint32_t btd; /* bluetooth duration */
+    uint32_t btpos; /* bluetooth position */
+    float btsv; /* bluetooth volume */
     uint32_t ck; /* check data */
 } BluetoothAudioMessage;
 
 typedef struct _BluetoothAudioControlMessage {
+    bool btp; /* play */
+    bool btpa; /* pause */
+    bool btpn; /* next */
+    bool btpb; /* back */
+    float btsv; /* volume value */
+    bool btsm; /* mute */
+    bool btpair; /* pair */
     uint32_t ck; /* check data */
 } BluetoothAudioControlMessage;
 
@@ -51,77 +42,58 @@ extern "C" {
 #endif
 
 /* Initializer values for message structs */
-#define RemotecontrolMessage_init_default        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-#define BluetoothAudioMessage_init_default       {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-#define BluetoothAudioControlMessage_init_default {0}
-#define RemotecontrolMessage_init_zero           {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-#define BluetoothAudioMessage_init_zero          {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-#define BluetoothAudioControlMessage_init_zero   {0}
+#define RemotecontrolMessage_init_default        {0}
+#define BluetoothAudioMessage_init_default       {0, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
+#define BluetoothAudioControlMessage_init_default {0, 0, 0, 0, 0, 0, 0, 0}
+#define RemotecontrolMessage_init_zero           {0}
+#define BluetoothAudioMessage_init_zero          {0, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
+#define BluetoothAudioControlMessage_init_zero   {0, 0, 0, 0, 0, 0, 0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
-#define RemotecontrolMessage_ax_tag              1
-#define RemotecontrolMessage_ay_tag              2
-#define RemotecontrolMessage_az_tag              3
-#define RemotecontrolMessage_aw_tag              4
-#define RemotecontrolMessage_bA_tag              5
-#define RemotecontrolMessage_bB_tag              6
-#define RemotecontrolMessage_bX_tag              7
-#define RemotecontrolMessage_bY_tag              8
-#define RemotecontrolMessage_bL_tag              9
-#define RemotecontrolMessage_bR_tag              10
-#define RemotecontrolMessage_bU_tag              11
-#define RemotecontrolMessage_bD_tag              12
-#define RemotecontrolMessage_btl_tag             13
-#define RemotecontrolMessage_ck_tag              14
-#define BluetoothAudioMessage_btl_tag            1
-#define BluetoothAudioMessage_btv_tag            2
-#define BluetoothAudioMessage_x_tag              3
-#define BluetoothAudioMessage_y_tag              4
-#define BluetoothAudioMessage_z_tag              5
-#define BluetoothAudioMessage_e1_tag             6
-#define BluetoothAudioMessage_e2_tag             7
-#define BluetoothAudioMessage_e3_tag             8
-#define BluetoothAudioMessage_t1_tag             9
-#define BluetoothAudioMessage_t2_tag             10
-#define BluetoothAudioMessage_ck_tag             11
+#define BluetoothAudioMessage_btc_tag            1
+#define BluetoothAudioMessage_btp_tag            2
+#define BluetoothAudioMessage_bts_tag            3
+#define BluetoothAudioMessage_bta_tag            4
+#define BluetoothAudioMessage_btd_tag            5
+#define BluetoothAudioMessage_btpos_tag          6
+#define BluetoothAudioMessage_btsv_tag           7
+#define BluetoothAudioMessage_ck_tag             100
+#define BluetoothAudioControlMessage_btp_tag     1
+#define BluetoothAudioControlMessage_btpa_tag    2
+#define BluetoothAudioControlMessage_btpn_tag    3
+#define BluetoothAudioControlMessage_btpb_tag    4
+#define BluetoothAudioControlMessage_btsv_tag    6
+#define BluetoothAudioControlMessage_btsm_tag    7
+#define BluetoothAudioControlMessage_btpair_tag  8
 #define BluetoothAudioControlMessage_ck_tag      100
 
 /* Struct field encoding specification for nanopb */
 #define RemotecontrolMessage_FIELDLIST(X, a) \
-X(a, STATIC,   REQUIRED, SINT32,   ax,                1) \
-X(a, STATIC,   REQUIRED, SINT32,   ay,                2) \
-X(a, STATIC,   REQUIRED, SINT32,   az,                3) \
-X(a, STATIC,   REQUIRED, SINT32,   aw,                4) \
-X(a, STATIC,   REQUIRED, INT32,    bA,                5) \
-X(a, STATIC,   REQUIRED, INT32,    bB,                6) \
-X(a, STATIC,   REQUIRED, INT32,    bX,                7) \
-X(a, STATIC,   REQUIRED, INT32,    bY,                8) \
-X(a, STATIC,   REQUIRED, INT32,    bL,                9) \
-X(a, STATIC,   REQUIRED, INT32,    bR,               10) \
-X(a, STATIC,   REQUIRED, INT32,    bU,               11) \
-X(a, STATIC,   REQUIRED, INT32,    bD,               12) \
-X(a, STATIC,   REQUIRED, UINT32,   btl,              13) \
-X(a, STATIC,   REQUIRED, INT32,    ck,               14)
+
 #define RemotecontrolMessage_CALLBACK NULL
 #define RemotecontrolMessage_DEFAULT NULL
 
 #define BluetoothAudioMessage_FIELDLIST(X, a) \
-X(a, STATIC,   REQUIRED, UINT32,   btl,               1) \
-X(a, STATIC,   REQUIRED, FLOAT,    btv,               2) \
-X(a, STATIC,   REQUIRED, SINT32,   x,                 3) \
-X(a, STATIC,   REQUIRED, SINT32,   y,                 4) \
-X(a, STATIC,   REQUIRED, SINT32,   z,                 5) \
-X(a, STATIC,   REQUIRED, BOOL,     e1,                6) \
-X(a, STATIC,   REQUIRED, BOOL,     e2,                7) \
-X(a, STATIC,   REQUIRED, BOOL,     e3,                8) \
-X(a, STATIC,   REQUIRED, FLOAT,    t1,                9) \
-X(a, STATIC,   REQUIRED, FLOAT,    t2,               10) \
-X(a, STATIC,   REQUIRED, UINT32,   ck,               11)
-#define BluetoothAudioMessage_CALLBACK NULL
+X(a, STATIC,   SINGULAR, BOOL,     btc,               1) \
+X(a, STATIC,   SINGULAR, BOOL,     btp,               2) \
+X(a, CALLBACK, SINGULAR, STRING,   bts,               3) \
+X(a, CALLBACK, SINGULAR, STRING,   bta,               4) \
+X(a, STATIC,   SINGULAR, UINT32,   btd,               5) \
+X(a, STATIC,   SINGULAR, UINT32,   btpos,             6) \
+X(a, STATIC,   SINGULAR, FLOAT,    btsv,              7) \
+X(a, STATIC,   SINGULAR, UINT32,   ck,              100)
+#define BluetoothAudioMessage_CALLBACK pb_default_field_callback
 #define BluetoothAudioMessage_DEFAULT NULL
 
 #define BluetoothAudioControlMessage_FIELDLIST(X, a) \
-X(a, STATIC,   REQUIRED, UINT32,   ck,              100)
+X(a, STATIC,   SINGULAR, BOOL,     btp,               1) \
+X(a, STATIC,   SINGULAR, BOOL,     btpa,              2) \
+X(a, STATIC,   SINGULAR, BOOL,     btpn,              3) \
+X(a, STATIC,   SINGULAR, BOOL,     btpb,              4) \
+X(a, STATIC,   SINGULAR, FLOAT,    btsv,              6) \
+X(a, STATIC,   SINGULAR, BOOL,     btsm,              7) \
+X(a, STATIC,   SINGULAR, BOOL,     btpair,            8) \
+X(a, STATIC,   SINGULAR, UINT32,   ck,              100)
 #define BluetoothAudioControlMessage_CALLBACK NULL
 #define BluetoothAudioControlMessage_DEFAULT NULL
 
@@ -135,10 +107,10 @@ extern const pb_msgdesc_t BluetoothAudioControlMessage_msg;
 #define BluetoothAudioControlMessage_fields &BluetoothAudioControlMessage_msg
 
 /* Maximum encoded size of messages (where known) */
-#define BluetoothAudioControlMessage_size        7
-#define BluetoothAudioMessage_size               51
-#define KISC_PB_H_MAX_SIZE                       RemotecontrolMessage_size
-#define RemotecontrolMessage_size                129
+/* BluetoothAudioMessage_size depends on runtime parameters */
+#define BluetoothAudioControlMessage_size        24
+#define KISC_PB_H_MAX_SIZE                       BluetoothAudioControlMessage_size
+#define RemotecontrolMessage_size                0
 
 #ifdef __cplusplus
 } /* extern "C" */
