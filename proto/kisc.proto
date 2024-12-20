@@ -1,2 +1,3 @@
 import "light.proto"
 import "motor.proto"
+import "btaudio.proto"
