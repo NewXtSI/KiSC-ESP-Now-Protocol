@@ -85,6 +85,7 @@ void printBuffer(uint8_t *buffer, uint32_t length) {
 }
 
 bool KiSCProto::sendBluetoothAudioMessage(BluetoothAudioMessage bam) {
+    DBGLOG(Verbose, "Sending Bluetooth Audio Message");
     return sendMessage(encodeBluetoothAudioMessage(bam));
 }
 
@@ -93,6 +94,7 @@ bool KiSCProto::sendBluetoothAudioControlMessage(BluetoothAudioControlMessage ba
 }
 
 size_t KiSCProto::encodeBluetoothAudioMessage(BluetoothAudioMessage bam) {
+    DBGLOG(Verbose, "Encoding Bluetooth Audio Message");
     pb_ostream_t stream = pb_ostream_from_buffer(send_buffer, sizeof(send_buffer));
     bool status = pb_encode(&stream, BluetoothAudioMessage_fields, &bam);
     #ifndef ARDUINO_ARCH_ESP32
@@ -100,6 +102,7 @@ size_t KiSCProto::encodeBluetoothAudioMessage(BluetoothAudioMessage bam) {
     #endif
     size_t message_length = stream.bytes_written;
     if (!status) {
+        DBGLOG(Error, "Encoding failed: %s", PB_GET_ERROR(&stream));
 //        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
         return 0;
     }
@@ -218,6 +221,7 @@ bool KiSCProto::sendMessage(uint32_t msglen, const uint8_t *mac) {
     if (!esp_now_is_peer_exist(mac)) {
         esp_now_add_peer(&peerInfo);
     }
+    DBGLOG(Debug, "Sending message to: %s", getFormattedMacAddr(mac).c_str());
     esp_err_t result = esp_now_send(mac, send_buffer, msglen);
     #else // ESP8266
     esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
@@ -226,8 +230,8 @@ bool KiSCProto::sendMessage(uint32_t msglen, const uint8_t *mac) {
     #endif
     if (result == ESP_OK) {
 #if USE_LOGGER
-        DBGLOG(Debug, "Broadcast message success");
-        DBGLOG(Debug, "Send message size: %i", msglen);
+        DBGLOG(Verbose, "Broadcast message success");
+        DBGLOG(Verbose, "Send message size: %i", msglen);
         printBuffer(send_buffer, msglen);
 #endif
 
