@@ -16,6 +16,32 @@ typedef struct _Joystick {
     bool btn;
 } Joystick;
 
+typedef struct _DPad {
+    bool up;
+    bool down;
+    bool left;
+    bool right;
+} DPad;
+
+typedef struct _Rumble {
+    uint32_t duration;
+    uint32_t delayedStart;
+    uint32_t weakMagnitude;
+    uint32_t strongMagnitude;
+} Rumble;
+
+typedef struct _Accelerometer {
+    int32_t x;
+    int32_t y;
+    int32_t z;
+} Accelerometer;
+
+typedef struct _Gyroscope {
+    int32_t x;
+    int32_t y;
+    int32_t z;
+} Gyroscope;
+
 typedef struct _RemotecontrolMessage {
     int32_t leftX; /* left joystick x */
     int32_t leftY; /* left joystick y */
@@ -40,6 +66,19 @@ typedef struct _RemotecontrolMessage {
     bool btndpadright; /* dpad right */
     bool btnLStick; /* button LStick */
     bool btnRStick; /* button RStick */
+    bool has_leftJoystick;
+    Joystick leftJoystick; /* left joystick */
+    bool has_rightJoystick;
+    Joystick rightJoystick; /* right joystick */
+    bool has_dpad;
+    DPad dpad; /* dpad */
+    int32_t playerLED; /* player LED */
+    bool has_rumble;
+    Rumble rumble; /* rumble */
+    bool has_accelerometer;
+    Accelerometer accelerometer; /* accelerometer */
+    bool has_gyroscope;
+    Gyroscope gyroscope; /* gyroscope */
     bool connected; /* controller connection status */
     int32_t battery;
     uint32_t ck; /* check data */
@@ -52,14 +91,36 @@ extern "C" {
 
 /* Initializer values for message structs */
 #define Joystick_init_default                    {0, 0, 0}
-#define RemotecontrolMessage_init_default        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define DPad_init_default                        {0, 0, 0, 0}
+#define Rumble_init_default                      {0, 0, 0, 0}
+#define Accelerometer_init_default               {0, 0, 0}
+#define Gyroscope_init_default                   {0, 0, 0}
+#define RemotecontrolMessage_init_default        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, Joystick_init_default, false, Joystick_init_default, false, DPad_init_default, 0, false, Rumble_init_default, false, Accelerometer_init_default, false, Gyroscope_init_default, 0, 0, 0}
 #define Joystick_init_zero                       {0, 0, 0}
-#define RemotecontrolMessage_init_zero           {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define DPad_init_zero                           {0, 0, 0, 0}
+#define Rumble_init_zero                         {0, 0, 0, 0}
+#define Accelerometer_init_zero                  {0, 0, 0}
+#define Gyroscope_init_zero                      {0, 0, 0}
+#define RemotecontrolMessage_init_zero           {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, Joystick_init_zero, false, Joystick_init_zero, false, DPad_init_zero, 0, false, Rumble_init_zero, false, Accelerometer_init_zero, false, Gyroscope_init_zero, 0, 0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define Joystick_x_tag                           1
 #define Joystick_y_tag                           2
 #define Joystick_btn_tag                         3
+#define DPad_up_tag                              1
+#define DPad_down_tag                            2
+#define DPad_left_tag                            3
+#define DPad_right_tag                           4
+#define Rumble_duration_tag                      1
+#define Rumble_delayedStart_tag                  2
+#define Rumble_weakMagnitude_tag                 3
+#define Rumble_strongMagnitude_tag               4
+#define Accelerometer_x_tag                      1
+#define Accelerometer_y_tag                      2
+#define Accelerometer_z_tag                      3
+#define Gyroscope_x_tag                          1
+#define Gyroscope_y_tag                          2
+#define Gyroscope_z_tag                          3
 #define RemotecontrolMessage_leftX_tag           1
 #define RemotecontrolMessage_leftY_tag           2
 #define RemotecontrolMessage_rightX_tag          3
@@ -83,6 +144,13 @@ extern "C" {
 #define RemotecontrolMessage_btndpadright_tag    21
 #define RemotecontrolMessage_btnLStick_tag       22
 #define RemotecontrolMessage_btnRStick_tag       23
+#define RemotecontrolMessage_leftJoystick_tag    24
+#define RemotecontrolMessage_rightJoystick_tag   25
+#define RemotecontrolMessage_dpad_tag            26
+#define RemotecontrolMessage_playerLED_tag       27
+#define RemotecontrolMessage_rumble_tag          28
+#define RemotecontrolMessage_accelerometer_tag   29
+#define RemotecontrolMessage_gyroscope_tag       30
 #define RemotecontrolMessage_connected_tag       98
 #define RemotecontrolMessage_battery_tag         99
 #define RemotecontrolMessage_ck_tag              100
@@ -94,6 +162,36 @@ X(a, STATIC,   SINGULAR, SINT32,   y,                 2) \
 X(a, STATIC,   SINGULAR, BOOL,     btn,               3)
 #define Joystick_CALLBACK NULL
 #define Joystick_DEFAULT NULL
+
+#define DPad_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, BOOL,     up,                1) \
+X(a, STATIC,   SINGULAR, BOOL,     down,              2) \
+X(a, STATIC,   SINGULAR, BOOL,     left,              3) \
+X(a, STATIC,   SINGULAR, BOOL,     right,             4)
+#define DPad_CALLBACK NULL
+#define DPad_DEFAULT NULL
+
+#define Rumble_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UINT32,   duration,          1) \
+X(a, STATIC,   SINGULAR, UINT32,   delayedStart,      2) \
+X(a, STATIC,   SINGULAR, UINT32,   weakMagnitude,     3) \
+X(a, STATIC,   SINGULAR, UINT32,   strongMagnitude,   4)
+#define Rumble_CALLBACK NULL
+#define Rumble_DEFAULT NULL
+
+#define Accelerometer_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, SINT32,   x,                 1) \
+X(a, STATIC,   SINGULAR, SINT32,   y,                 2) \
+X(a, STATIC,   SINGULAR, SINT32,   z,                 3)
+#define Accelerometer_CALLBACK NULL
+#define Accelerometer_DEFAULT NULL
+
+#define Gyroscope_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, SINT32,   x,                 1) \
+X(a, STATIC,   SINGULAR, SINT32,   y,                 2) \
+X(a, STATIC,   SINGULAR, SINT32,   z,                 3)
+#define Gyroscope_CALLBACK NULL
+#define Gyroscope_DEFAULT NULL
 
 #define RemotecontrolMessage_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, SINT32,   leftX,             1) \
@@ -119,23 +217,48 @@ X(a, STATIC,   SINGULAR, BOOL,     btndpadleft,      20) \
 X(a, STATIC,   SINGULAR, BOOL,     btndpadright,     21) \
 X(a, STATIC,   SINGULAR, BOOL,     btnLStick,        22) \
 X(a, STATIC,   SINGULAR, BOOL,     btnRStick,        23) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  leftJoystick,     24) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  rightJoystick,    25) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  dpad,             26) \
+X(a, STATIC,   SINGULAR, INT32,    playerLED,        27) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  rumble,           28) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  accelerometer,    29) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  gyroscope,        30) \
 X(a, STATIC,   SINGULAR, BOOL,     connected,        98) \
 X(a, STATIC,   SINGULAR, INT32,    battery,          99) \
 X(a, STATIC,   SINGULAR, UINT32,   ck,              100)
 #define RemotecontrolMessage_CALLBACK NULL
 #define RemotecontrolMessage_DEFAULT NULL
+#define RemotecontrolMessage_leftJoystick_MSGTYPE Joystick
+#define RemotecontrolMessage_rightJoystick_MSGTYPE Joystick
+#define RemotecontrolMessage_dpad_MSGTYPE DPad
+#define RemotecontrolMessage_rumble_MSGTYPE Rumble
+#define RemotecontrolMessage_accelerometer_MSGTYPE Accelerometer
+#define RemotecontrolMessage_gyroscope_MSGTYPE Gyroscope
 
 extern const pb_msgdesc_t Joystick_msg;
+extern const pb_msgdesc_t DPad_msg;
+extern const pb_msgdesc_t Rumble_msg;
+extern const pb_msgdesc_t Accelerometer_msg;
+extern const pb_msgdesc_t Gyroscope_msg;
 extern const pb_msgdesc_t RemotecontrolMessage_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define Joystick_fields &Joystick_msg
+#define DPad_fields &DPad_msg
+#define Rumble_fields &Rumble_msg
+#define Accelerometer_fields &Accelerometer_msg
+#define Gyroscope_fields &Gyroscope_msg
 #define RemotecontrolMessage_fields &RemotecontrolMessage_msg
 
 /* Maximum encoded size of messages (where known) */
+#define Accelerometer_size                       18
+#define DPad_size                                8
+#define Gyroscope_size                           18
 #define Joystick_size                            14
 #define REMOTECONTROL_PB_H_MAX_SIZE              RemotecontrolMessage_size
-#define RemotecontrolMessage_size                92
+#define RemotecontrolMessage_size                218
+#define Rumble_size                              24
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -9,6 +9,18 @@
 PB_BIND(Joystick, Joystick, AUTO)
 
 
+PB_BIND(DPad, DPad, AUTO)
+
+
+PB_BIND(Rumble, Rumble, AUTO)
+
+
+PB_BIND(Accelerometer, Accelerometer, AUTO)
+
+
+PB_BIND(Gyroscope, Gyroscope, AUTO)
+
+
 PB_BIND(RemotecontrolMessage, RemotecontrolMessage, 2)
 
 

@@ -13,6 +13,25 @@ message DPad {
     bool            right = 4;
 }
 
+message Rumble {
+    uint32          duration = 1;
+    uint32          delayedStart = 2;
+    uint32          weakMagnitude = 3;
+    uint32          strongMagnitude = 4;
+}
+
+message Accelerometer {
+    sint32          x = 1;
+    sint32          y = 2;
+    sint32          z = 3;
+}
+
+message Gyroscope {
+    sint32          x = 1;
+    sint32          y = 2;
+    sint32          z = 3;
+}
+
 message RemotecontrolMessage {
     sint32          leftX = 1;  // left joystick x
     sint32          leftY = 2;  // left joystick y
@@ -41,7 +60,13 @@ message RemotecontrolMessage {
     Joystick        leftJoystick = 24;  // left joystick	
     Joystick        rightJoystick = 25;  // right joystick
     DPad            dpad = 26;  // dpad         
+    int32           playerLED = 27;  // player LED
+    Rumble          rumble = 28;  // rumble
+    Accelerometer   accelerometer = 29;  // accelerometer
+    Gyroscope       gyroscope = 30;  // gyroscope
+    
     bool            connected = 98;  // controller connection status
     int32           battery = 99;
+
     uint32          ck = 100; // check data
 }
