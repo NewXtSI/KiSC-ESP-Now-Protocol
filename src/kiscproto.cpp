@@ -229,10 +229,16 @@ bool RemotecontrolMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
     bool status = pb_decode(&stream, RemotecontrolMessage_fields, &_rcm);
     if (!status) {
+#if USE_LOGGER
+        DBGLOG(Error, "Decoding remote control msg failed: %s", PB_GET_ERROR(&stream));
+#endif
+
 //        if(joystick.devmode) printf("Decoding remote control msg failed: %s\r\n", PB_GET_ERROR(&stream));
         return false;
     }
     if (kiscproto._pRemotecontrolMessageCallbacks != nullptr) {
+#if USE_LOGGER
+#endif                
         kiscproto._pRemotecontrolMessageCallbacks->onRemotecontrolMessage(_rcm);
     }
     return true;
@@ -304,6 +310,11 @@ void UniversalMessageRecvCallback(const uint8_t *macAddr, const uint8_t *data, i
             break;
 #endif
         default:
+        #if USE_LOGGER
+            DBGLOG(Error, "Unknown message type: %i", msgType);
+        #else
+            ESP_LOGE("ESPNow", "Unknown message type: %i", msgType);
+        #endif
             break;            
     }
 //    RemotecontrolMessageDecodeMessage(msgLen);

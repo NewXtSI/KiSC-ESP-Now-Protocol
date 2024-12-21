@@ -1,5 +1,17 @@
 syntax = "proto3";
 
+message Joystick {
+    sint32          x = 1;
+    sint32          y = 2;
+    bool            btn = 3;
+}
+
+message DPad {
+    bool            up = 1;
+    bool            down = 2;
+    bool            left = 3;
+    bool            right = 4;
+}
 
 message RemotecontrolMessage {
     sint32          leftX = 1;  // left joystick x
@@ -24,6 +36,11 @@ message RemotecontrolMessage {
     bool            btndpadleft = 20;  // dpad left
     bool            btndpadright = 21;  // dpad right
 
+    bool            btnLStick = 22;  // button LStick
+    bool            btnRStick = 23;  // button RStick
+    Joystick        leftJoystick = 24;  // left joystick	
+    Joystick        rightJoystick = 25;  // right joystick
+    DPad            dpad = 26;  // dpad         
     bool            connected = 98;  // controller connection status
     int32           battery = 99;
     uint32          ck = 100; // check data

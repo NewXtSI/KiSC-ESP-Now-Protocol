@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+enum MemberType {
+    UNKNOWN = 0;
+
+}
+
+message Heartbeat {
+    uint32          timestamp = 1;
+    uint32          uptime = 2;
+    uint32          ck = 100; // check data
+}
+
+message Sysinfo {
+    MemberType      type = 1;
+    string          name = 2;
+    string          version = 3;
+    string          ip = 4;
+    string          mac = 5;
+    string          ssid = 6;
+    string          rssi = 7;
+    string          uptime = 8;
+    string          freeheap = 9;
+    string          voltage = 10;
+    string          temperature = 11;
+    string          cpufreq = 12;
+    string          flashsize = 13;
+    string          flashspeed = 14;
+    string          flashmode = 15;
+    string          flashsizeid = 16;
+    string          core = 17;
+    string          sdk = 18;
+    string          bootmode = 19;
+    string          bootversion = 20;
+    string          bootmode1 = 21;
+    string          bootversion1 = 22;
+    uint32          ck = 100; // check data
+}
+
+message SysCommand {
+    uint32          command = 1;
+    uint32          ck = 100; // check data
+}
+
+message SysMessage {
+    Heartbeat         heartbeat = 1;
+    optional Sysinfo   info = 2;
+    optional SysCommand   command = 3;
+    uint32          ck = 100; // check data
+}

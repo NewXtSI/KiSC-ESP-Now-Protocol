@@ -9,9 +9,109 @@
 #error Regenerate this file with the current version of nanopb generator.
 #endif
 
+/* Struct definitions */
+typedef struct _MotorControl {
+    char dummy_field;
+} MotorControl;
+
+typedef struct _MotorFeedback {
+    char dummy_field;
+} MotorFeedback;
+
+typedef struct _MotorboardControl {
+    bool has_left;
+    MotorControl left;
+    bool has_right;
+    MotorControl right;
+} MotorboardControl;
+
+typedef struct _MotorboardFeedback {
+    bool has_left;
+    MotorFeedback left;
+    bool has_right;
+    MotorFeedback right;
+    float voltage;
+    float current;
+    float temperature;
+    bool charging;
+    bool connected;
+} MotorboardFeedback;
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Initializer values for message structs */
+#define MotorControl_init_default                {0}
+#define MotorFeedback_init_default               {0}
+#define MotorboardControl_init_default           {false, MotorControl_init_default, false, MotorControl_init_default}
+#define MotorboardFeedback_init_default          {false, MotorFeedback_init_default, false, MotorFeedback_init_default, 0, 0, 0, 0, 0}
+#define MotorControl_init_zero                   {0}
+#define MotorFeedback_init_zero                  {0}
+#define MotorboardControl_init_zero              {false, MotorControl_init_zero, false, MotorControl_init_zero}
+#define MotorboardFeedback_init_zero             {false, MotorFeedback_init_zero, false, MotorFeedback_init_zero, 0, 0, 0, 0, 0}
+
+/* Field tags (for use in manual encoding/decoding) */
+#define MotorboardControl_left_tag               1
+#define MotorboardControl_right_tag              2
+#define MotorboardFeedback_left_tag              1
+#define MotorboardFeedback_right_tag             2
+#define MotorboardFeedback_voltage_tag           3
+#define MotorboardFeedback_current_tag           4
+#define MotorboardFeedback_temperature_tag       5
+#define MotorboardFeedback_charging_tag          6
+#define MotorboardFeedback_connected_tag         100
+
+/* Struct field encoding specification for nanopb */
+#define MotorControl_FIELDLIST(X, a) \
+
+#define MotorControl_CALLBACK NULL
+#define MotorControl_DEFAULT NULL
+
+#define MotorFeedback_FIELDLIST(X, a) \
+
+#define MotorFeedback_CALLBACK NULL
+#define MotorFeedback_DEFAULT NULL
+
+#define MotorboardControl_FIELDLIST(X, a) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  left,              1) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  right,             2)
+#define MotorboardControl_CALLBACK NULL
+#define MotorboardControl_DEFAULT NULL
+#define MotorboardControl_left_MSGTYPE MotorControl
+#define MotorboardControl_right_MSGTYPE MotorControl
+
+#define MotorboardFeedback_FIELDLIST(X, a) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  left,              1) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  right,             2) \
+X(a, STATIC,   SINGULAR, FLOAT,    voltage,           3) \
+X(a, STATIC,   SINGULAR, FLOAT,    current,           4) \
+X(a, STATIC,   SINGULAR, FLOAT,    temperature,       5) \
+X(a, STATIC,   SINGULAR, BOOL,     charging,          6) \
+X(a, STATIC,   SINGULAR, BOOL,     connected,       100)
+#define MotorboardFeedback_CALLBACK NULL
+#define MotorboardFeedback_DEFAULT NULL
+#define MotorboardFeedback_left_MSGTYPE MotorFeedback
+#define MotorboardFeedback_right_MSGTYPE MotorFeedback
+
+extern const pb_msgdesc_t MotorControl_msg;
+extern const pb_msgdesc_t MotorFeedback_msg;
+extern const pb_msgdesc_t MotorboardControl_msg;
+extern const pb_msgdesc_t MotorboardFeedback_msg;
+
+/* Defines for backwards compatibility with code written before nanopb-0.4.0 */
+#define MotorControl_fields &MotorControl_msg
+#define MotorFeedback_fields &MotorFeedback_msg
+#define MotorboardControl_fields &MotorboardControl_msg
+#define MotorboardFeedback_fields &MotorboardFeedback_msg
+
+/* Maximum encoded size of messages (where known) */
+#define MOTOR_PB_H_MAX_SIZE                      MotorboardFeedback_size
+#define MotorControl_size                        0
+#define MotorFeedback_size                       0
+#define MotorboardControl_size                   4
+#define MotorboardFeedback_size                  24
 
 #ifdef __cplusplus
 } /* extern "C" */

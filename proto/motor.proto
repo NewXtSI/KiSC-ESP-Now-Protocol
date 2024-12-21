@@ -1,3 +1,26 @@
 // Motor Messages
 
 syntax = "proto3";
+
+message MotorControl {
+
+}
+
+message MotorFeedback {
+
+}
+
+message MotorboardControl {
+    MotorControl left = 1;
+    MotorControl right = 2;
+}
+
+message MotorboardFeedback {
+    MotorFeedback left = 1;
+    MotorFeedback right = 2;
+    float voltage = 3;
+    float current = 4;
+    float temperature = 5;
+    bool charging = 6;
+    bool connected = 100;
+}

@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+import public "system.proto";
 import public "light.proto";
 import public "motor.proto";
 import public "btaudio.proto";
