@@ -10,6 +10,12 @@
 #endif
 
 /* Struct definitions */
+typedef struct _Joystick {
+    int32_t x;
+    int32_t y;
+    bool btn;
+} Joystick;
+
 typedef struct _RemotecontrolMessage {
     int32_t leftX; /* left joystick x */
     int32_t leftY; /* left joystick y */
@@ -32,6 +38,8 @@ typedef struct _RemotecontrolMessage {
     bool btndpaddown; /* dpad down */
     bool btndpadleft; /* dpad left */
     bool btndpadright; /* dpad right */
+    bool btnLStick; /* button LStick */
+    bool btnRStick; /* button RStick */
     bool connected; /* controller connection status */
     int32_t battery;
     uint32_t ck; /* check data */
@@ -43,10 +51,15 @@ extern "C" {
 #endif
 
 /* Initializer values for message structs */
-#define RemotecontrolMessage_init_default        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-#define RemotecontrolMessage_init_zero           {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define Joystick_init_default                    {0, 0, 0}
+#define RemotecontrolMessage_init_default        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define Joystick_init_zero                       {0, 0, 0}
+#define RemotecontrolMessage_init_zero           {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
+#define Joystick_x_tag                           1
+#define Joystick_y_tag                           2
+#define Joystick_btn_tag                         3
 #define RemotecontrolMessage_leftX_tag           1
 #define RemotecontrolMessage_leftY_tag           2
 #define RemotecontrolMessage_rightX_tag          3
@@ -68,11 +81,20 @@ extern "C" {
 #define RemotecontrolMessage_btndpaddown_tag     19
 #define RemotecontrolMessage_btndpadleft_tag     20
 #define RemotecontrolMessage_btndpadright_tag    21
+#define RemotecontrolMessage_btnLStick_tag       22
+#define RemotecontrolMessage_btnRStick_tag       23
 #define RemotecontrolMessage_connected_tag       98
 #define RemotecontrolMessage_battery_tag         99
 #define RemotecontrolMessage_ck_tag              100
 
 /* Struct field encoding specification for nanopb */
+#define Joystick_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, SINT32,   x,                 1) \
+X(a, STATIC,   SINGULAR, SINT32,   y,                 2) \
+X(a, STATIC,   SINGULAR, BOOL,     btn,               3)
+#define Joystick_CALLBACK NULL
+#define Joystick_DEFAULT NULL
+
 #define RemotecontrolMessage_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, SINT32,   leftX,             1) \
 X(a, STATIC,   SINGULAR, SINT32,   leftY,             2) \
@@ -95,20 +117,25 @@ X(a, STATIC,   SINGULAR, BOOL,     btndpadup,        18) \
 X(a, STATIC,   SINGULAR, BOOL,     btndpaddown,      19) \
 X(a, STATIC,   SINGULAR, BOOL,     btndpadleft,      20) \
 X(a, STATIC,   SINGULAR, BOOL,     btndpadright,     21) \
+X(a, STATIC,   SINGULAR, BOOL,     btnLStick,        22) \
+X(a, STATIC,   SINGULAR, BOOL,     btnRStick,        23) \
 X(a, STATIC,   SINGULAR, BOOL,     connected,        98) \
 X(a, STATIC,   SINGULAR, INT32,    battery,          99) \
 X(a, STATIC,   SINGULAR, UINT32,   ck,              100)
 #define RemotecontrolMessage_CALLBACK NULL
 #define RemotecontrolMessage_DEFAULT NULL
 
+extern const pb_msgdesc_t Joystick_msg;
 extern const pb_msgdesc_t RemotecontrolMessage_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
+#define Joystick_fields &Joystick_msg
 #define RemotecontrolMessage_fields &RemotecontrolMessage_msg
 
 /* Maximum encoded size of messages (where known) */
+#define Joystick_size                            14
 #define REMOTECONTROL_PB_H_MAX_SIZE              RemotecontrolMessage_size
-#define RemotecontrolMessage_size                86
+#define RemotecontrolMessage_size                92
 
 #ifdef __cplusplus
 } /* extern "C" */

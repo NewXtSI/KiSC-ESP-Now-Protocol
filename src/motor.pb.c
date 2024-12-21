@@ -6,4 +6,16 @@
 #error Regenerate this file with the current version of nanopb generator.
 #endif
 
+PB_BIND(MotorControl, MotorControl, AUTO)
+
+
+PB_BIND(MotorFeedback, MotorFeedback, AUTO)
+
+
+PB_BIND(MotorboardControl, MotorboardControl, AUTO)
+
+
+PB_BIND(MotorboardFeedback, MotorboardFeedback, 2)
+
+
 

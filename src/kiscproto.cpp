@@ -244,6 +244,8 @@ bool RemotecontrolMessageDecodeMessage(uint16_t message_length) {
         return false;
     }
     if (kiscproto._pRemotecontrolMessageCallbacks != nullptr) {
+#if USE_LOGGER
+#endif                
         kiscproto._pRemotecontrolMessageCallbacks->onRemotecontrolMessage(_rcm);
     }
     return true;
@@ -316,6 +318,11 @@ void UniversalMessageRecvCallback(const esp_now_recv_info *recv_info, const uint
             break;
 #endif
         default:
+        #if USE_LOGGER
+            DBGLOG(Error, "Unknown message type: %i", msgType);
+        #else
+            ESP_LOGE("ESPNow", "Unknown message type: %i", msgType);
+        #endif
             break;            
     }
 //    RemotecontrolMessageDecodeMessage(msgLen);
