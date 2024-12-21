@@ -95,7 +95,7 @@ void printBuffer(uint8_t *buffer, uint32_t length) {
 #if USE_LOGGER    
     DBGLOG(Debug, "Buffer: %s", outstr);
 #else
-    ESP_LOGD("ESPNow", "Buffer: %s", outstr);
+    ESP_LOGI("ESPNow", "Buffer: %s", outstr);
 #endif
 //    Serial.println();
 }
@@ -186,10 +186,16 @@ size_t KiSCProto::encodeRemotecontrolMessage(RemotecontrolMessage rcm) {
     bool status = pb_encode(&stream, RemotecontrolMessage_fields, &rcm);
     send_buffer[0] = MSG_TYPE_REMOTECONTROL_MESSAGE;
     #ifndef ARDUINO_ARCH_ESP32
-    delay(5); // ESP8266 needs it or die
+//    delay(5); // ESP8266 needs it or die
     #endif
     size_t message_length = stream.bytes_written;
     if (!status) {
+#if USE_LOGGER
+        DBGLOG(Error, "Encoding failed: %s", PB_GET_ERROR(&stream));
+#else
+        ESP_LOGE("ESPNow", "Encoding failed: %s", PB_GET_ERROR(&stream));
+#endif
+
 //        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
         return 0;
     }
@@ -231,8 +237,9 @@ bool RemotecontrolMessageDecodeMessage(uint16_t message_length) {
     if (!status) {
 #if USE_LOGGER
         DBGLOG(Error, "Decoding remote control msg failed: %s", PB_GET_ERROR(&stream));
-#endif
-
+#else
+        ESP_LOGE("ESPNow", "Decoding remote control msg failed: %s", PB_GET_ERROR(&stream));
+#endif        
 //        if(joystick.devmode) printf("Decoding remote control msg failed: %s\r\n", PB_GET_ERROR(&stream));
         return false;
     }
@@ -280,7 +287,8 @@ RemotecontrolMessage KiSCProto::newRemotecontrolMessage() {
     return rcm;
 }
 #endif
-void UniversalMessageRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
+void UniversalMessageRecvCallback(const esp_now_recv_info *recv_info, const uint8_t *data, int dataLen) {
+    const uint8_t *macAddr = recv_info->src_addr;
     saveReceiver(macAddr);
     #ifdef ARDUINO_ARCH_ESP32
     int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen-1);
@@ -346,7 +354,11 @@ bool KiSCProto::sendMessage(uint32_t msglen, const uint8_t *mac) {
     if (!esp_now_is_peer_exist(mac)) {
         esp_now_add_peer(&peerInfo);
     }
+#if USE_LOGGER    
     DBGLOG(Debug, "Sending message to: %s", getFormattedMacAddr(mac).c_str());
+#else
+    ESP_LOGI("ESPNow", "Sending message to: %s", getFormattedMacAddr(mac).c_str());
+#endif
     esp_err_t result = esp_now_send(mac, send_buffer, msglen);
     #else // ESP8266
     esp_now_set_self_role(ESP_NOW_ROLE_CONTROLLER);
@@ -358,6 +370,10 @@ bool KiSCProto::sendMessage(uint32_t msglen, const uint8_t *mac) {
         DBGLOG(Verbose, "Broadcast message success");
         DBGLOG(Verbose, "Send message size: %i", msglen);
         printBuffer(send_buffer, msglen);
+#else
+        ESP_LOGI("ESPNow", "Broadcast message success");
+        ESP_LOGI("ESPNow", "Send message size: %lu", msglen);
+        printBuffer(send_buffer, msglen);        
 #endif
 
 /*        
@@ -416,8 +432,8 @@ void KiSCProto::printReceivers() {
 #if USE_LOGGER
     DBGLOG(Info, "receiverId: %i [%s]", ka.first, macStr);
 #else
-    ESP_LOGI("ESPNow", "receiverId: %i [%s]", ka.first, macStr);
-#endif    
+    ESP_LOGI("ESPNow", "receiverId: %lu [%s]", ka.first, macStr);
+#endif
 //    Serial.printf("receiverId: %i [%s]\r\n",ka.first,macStr);
   }
 }
@@ -429,7 +445,7 @@ void saveReceiver(const uint8_t *macAddr) {
     DBGLOG(Info, "New receiverId: %i with MAC: ", id);
     printMacAddress(macAddr);
 #else
-    ESP_LOGI("ESPNow", "New receiverId: %i with MAC: ", id);
+    ESP_LOGI("ESPNow", "New receiverId: %lu with MAC: ", id);
     printMacAddress(macAddr);
 #endif
 

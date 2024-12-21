@@ -1,5 +1,5 @@
-#ifndef _KISC_PROTO_H_
-#define _KISC_PROTO_H_
+#ifndef INCLUDE_KISCPROTO_INCLUDED
+#define INCLUDE_KISCPROTO_INCLUDED
 
 
 /*
@@ -9,7 +9,7 @@ Writing to kisc.pb.h and kisc.pb.c
 
 
 */
-#define PROTOBUF_ALL_MESSAGES    1
+#define PROTOBUF_ALL_MESSAGES    0
 #if PROTOBUF_ALL_MESSAGES
 #define PROTOBUF_USE_BT_AUDIO          1
 #define PROTOBUF_USE_REMOTE_CONTROL    1
@@ -18,8 +18,8 @@ Writing to kisc.pb.h and kisc.pb.c
 #define PROTOBUF_USE_SOUND_GENERATOR   1
 #define PROTOBUF_USE_DISPLAY           1
 #else
-#define PROTOBUF_USE_BT_AUDIO          1
-#define PROTOBUF_USE_REMOTE_CONTROL    0
+#define PROTOBUF_USE_BT_AUDIO          0
+#define PROTOBUF_USE_REMOTE_CONTROL    1
 #define PROTOBUF_USE_LIGHT             0
 #define PROTOBUF_USE_MOTOR             0
 #define PROTOBUF_USE_SOUND_GENERATOR   0
@@ -54,7 +54,7 @@ Writing to kisc.pb.h and kisc.pb.c
 #include <vector>
 #include <string>
 
-#define USE_LOGGER 1
+#define USE_LOGGER 0
 #if PROTOBUF_USE_BT_AUDIO
 class BluetoothAudioMessageCallbacks;
 class BluetoothAudioControlMessageCallbacks;
@@ -178,4 +178,4 @@ class RemotecontrolMessageCallbacks {
 
 extern KiSCProto kiscproto;
 
-#endif
+#endif  /* INCLUDE_KISCPROTO_INCLUDED */
