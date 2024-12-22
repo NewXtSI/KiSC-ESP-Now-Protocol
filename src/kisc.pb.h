@@ -4,6 +4,7 @@
 #ifndef PB_KISC_PB_H_INCLUDED
 #define PB_KISC_PB_H_INCLUDED
 #include <pb.h>
+#include "system.pb.h"
 #include "light.pb.h"
 #include "motor.pb.h"
 #include "btaudio.pb.h"

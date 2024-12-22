@@ -12,6 +12,17 @@ BluetoothAudioControlMessage _bacm = BluetoothAudioControlMessage_init_zero;
 #if PROTOBUF_USE_REMOTE_CONTROL
 RemotecontrolMessage _rcm = RemotecontrolMessage_init_zero;
 #endif
+#if PROTOBUF_USE_LIGHT
+LightMessage _lm = LightMessage_init_zero;
+#endif
+#if PROTOBUF_USE_MOTOR
+MotorboardFeedback _mm = MotorboardFeedback_init_zero;
+MotorboardControl _mcm = MotorboardControl_init_zero;
+#endif
+#if PROTOBUF_USE_SYSTEM
+SysMessage _sm = SysMessage_init_zero;
+#endif
+
 
 /// general buffer for msg sender
 uint8_t send_buffer[256];
@@ -31,6 +42,16 @@ KiSCProto::KiSCProto() {
 #endif
 #if PROTOBUF_USE_REMOTE_CONTROL
     _pRemotecontrolMessageCallbacks = nullptr;
+#endif
+#if PROTOBUF_USE_LIGHT
+    _pLightMessageCallbacks = nullptr;
+#endif
+#if PROTOBUF_USE_MOTOR
+    _pMotorMessageCallbacks = nullptr;
+    _pMotorControlMessageCallbacks = nullptr;
+#endif
+#if PROTOBUF_USE_SYSTEM
+    _pSystemMessageCallbacks = nullptr;
 #endif
 
     uint32_t chipId = 0;
@@ -52,12 +73,39 @@ KiSCProto::setBluetoothAudioControlMessageCallbacks(BluetoothAudioControlMessage
     _pBluetoothAudioControlMessageCallbacks = pCallbacks;
 }
 #endif
+
 #if PROTOBUF_USE_REMOTE_CONTROL
 void
 KiSCProto::setRemotecontrolMessageCallbacks(RemotecontrolMessageCallbacks* pCallbacks) {
     _pRemotecontrolMessageCallbacks = pCallbacks;
 }
 #endif
+
+#if PROTOBUF_USE_LIGHT
+void
+KiSCProto::setLightMessageCallbacks(LightMessageCallbacks* pCallbacks) {
+    _pLightMessageCallbacks = pCallbacks;
+}
+#endif
+
+#if PROTOBUF_USE_MOTOR
+void
+KiSCProto::setMotorMessageCallbacks(MotorMessageCallbacks* pCallbacks) {
+    _pMotorMessageCallbacks = pCallbacks;
+}
+void
+KiSCProto::setMotorControlMessageCallbacks(MotorControlMessageCallbacks* pCallbacks) {
+    _pMotorControlMessageCallbacks = pCallbacks;
+}
+#endif
+
+#if PROTOBUF_USE_SYSTEM
+void
+KiSCProto::setSystemMessageCallbacks(SystemMessageCallbacks* pCallbacks) {
+    _pSystemMessageCallbacks = pCallbacks;
+}
+#endif
+
 uint32_t getReceiverId(const uint8_t *macAddr){
     return macAddr[0]+macAddr[1]+macAddr[2]+macAddr[3]+macAddr[4]+macAddr[5];
 }
@@ -113,7 +161,31 @@ bool KiSCProto::sendBluetoothAudioControlMessage(BluetoothAudioControlMessage ba
 bool KiSCProto::sendRemotecontrolMessage(RemotecontrolMessage rcm) {
     return sendMessage(encodeRemotecontrolMessage(rcm));
 }
+bool KiSCProto::sendRemotecontrolMessage(RemotecontrolMessage rcm, const uint8_t *mac) {
+    return sendMessage(encodeRemotecontrolMessage(rcm), mac);
+}
 #endif
+#if PROTOBUF_USE_LIGHT
+bool KiSCProto::sendLightMessage(LightMessage lm) {
+    return sendMessage(encodeLightMessage(lm));
+}
+#endif
+#if PROTOBUF_USE_MOTOR
+bool KiSCProto::sendMotorMessage(MotorboardFeedback mm) {
+    return sendMessage(encodeMotorMessage(mm));
+}
+bool KiSCProto::sendMotorControlMessage(MotorboardControl mcm) {
+    return sendMessage(encodeMotorControlMessage(mcm));
+}
+#endif
+
+#if PROTOBUF_USE_SYSTEM
+bool KiSCProto::sendSystemMessage(SysMessage sm) {
+    return sendMessage(encodeSystemMessage(sm));
+}
+#endif
+
+
 #if PROTOBUF_USE_BT_AUDIO
 typedef struct
 {   char text[32]; } callback_context_t;
@@ -202,6 +274,69 @@ size_t KiSCProto::encodeRemotecontrolMessage(RemotecontrolMessage rcm) {
     return message_length+1;
 }
 #endif
+
+#if PROTOBUF_USE_LIGHT
+size_t KiSCProto::encodeLightMessage(LightMessage lm) {
+    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
+    bool status = pb_encode(&stream, LightMessage_fields, &lm);
+    send_buffer[0] = MSG_TYPE_LIGHT_MESSAGE;
+    #ifndef ARDUINO_ARCH_ESP32
+    delay(5); // ESP8266 needs it or die
+    #endif
+    size_t message_length = stream.bytes_written;
+    if (!status) {
+//        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
+        return 0;
+    }
+    return message_length+1;
+}
+#endif
+#if PROTOBUF_USE_MOTOR
+size_t KiSCProto::encodeMotorMessage(MotorboardFeedback mm) {
+    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
+    bool status = pb_encode(&stream, MotorboardFeedback_fields, &mm);
+    send_buffer[0] = MSG_TYPE_MOTOR_MESSAGE;
+    #ifndef ARDUINO_ARCH_ESP32
+    delay(5); // ESP8266 needs it or die
+    #endif
+    size_t message_length = stream.bytes_written;
+    if (!status) {
+//        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
+        return 0;
+    }
+    return message_length+1;
+}
+size_t KiSCProto::encodeMotorControlMessage(MotorboardControl mcm) {
+    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
+    bool status = pb_encode(&stream, MotorboardControl_fields, &mcm);
+    send_buffer[0] = MSG_TYPE_MOTOR_CONTROL_MESSAGE;
+    #ifndef ARDUINO_ARCH_ESP32
+    delay(5); // ESP8266 needs it or die
+    #endif
+    size_t message_length = stream.bytes_written;
+    if (!status) {
+//        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
+        return 0;
+    }
+    return message_length+1;
+}
+#endif
+#if PROTOBUF_USE_SYSTEM
+size_t KiSCProto::encodeSystemMessage(SysMessage sm) {
+    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
+    bool status = pb_encode(&stream, SysMessage_fields, &sm);
+    send_buffer[0] = MSG_TYPE_SYSTEM_MESSAGE;
+    #ifndef ARDUINO_ARCH_ESP32
+    delay(5); // ESP8266 needs it or die
+    #endif
+    size_t message_length = stream.bytes_written;
+    if (!status) {
+//        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
+        return 0;
+    }
+    return message_length+1;
+}
+#endif
 #if PROTOBUF_USE_BT_AUDIO
 bool BluetoothAudioMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
@@ -252,6 +387,59 @@ bool RemotecontrolMessageDecodeMessage(uint16_t message_length) {
 }
 #endif
 
+#if PROTOBUF_USE_LIGHT
+bool LightMessageDecodeMessage(uint16_t message_length) {
+    pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
+    bool status = pb_decode(&stream, LightMessage_fields, &_lm);
+    if (!status) {
+//        if(joystick.devmode) printf("Decoding light msg failed: %s\r\n", PB_GET_ERROR(&stream));
+        return false;
+    }
+    if (kiscproto._pLightMessageCallbacks != nullptr) {
+        kiscproto._pLightMessageCallbacks->onLightMessage(_lm);
+    }
+    return true;
+}
+#endif
+
+#if PROTOBUF_USE_MOTOR
+bool MotorMessageDecodeMessage(uint16_t message_length) {
+    pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
+    bool status = pb_decode(&stream, MotorboardFeedback_fields, &_mm);
+    if (!status) {
+        return false;
+    }
+    if (kiscproto._pMotorMessageCallbacks != nullptr) {
+        kiscproto._pMotorMessageCallbacks->onMotorMessage(_mm);
+    }
+    return true;
+}
+bool MotorControlMessageDecodeMessage(uint16_t message_length) {
+    pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
+    bool status = pb_decode(&stream, MotorboardControl_fields, &_mcm);
+    if (!status) {
+        return false;
+    }
+    if (kiscproto._pMotorControlMessageCallbacks != nullptr) {
+        kiscproto._pMotorControlMessageCallbacks->onMotorControlMessage(_mcm);
+    }
+    return true;
+}
+#endif
+#if PROTOBUF_USE_SYSTEM
+bool SystemMessageDecodeMessage(uint16_t message_length) {
+    pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
+    bool status = pb_decode(&stream, SysMessage_fields, &_sm);
+    if (!status) {
+        return false;
+    }
+    if (kiscproto._pSystemMessageCallbacks != nullptr) {
+        kiscproto._pSystemMessageCallbacks->onSystemMessage(_sm);
+    }
+    return true;
+}
+#endif
+
 void
 KiSCProto::reportError(const char *msg) {
 //    if (devmode) Serial.println(msg);
@@ -268,8 +456,25 @@ KiSCProto::reportError(const char *msg) {
         _pRemotecontrolMessageCallbacks->onError(msg);
     }
 #endif    
+#if PROTOBUF_USE_LIGHT
+    if (_pLightMessageCallbacks != nullptr) {
+        _pLightMessageCallbacks->onError(msg);
+    }
+#endif
+#if PROTOBUF_USE_MOTOR
+    if (_pMotorMessageCallbacks != nullptr) {
+        _pMotorMessageCallbacks->onError(msg);
+    }
+    if (_pMotorControlMessageCallbacks != nullptr) {
+        _pMotorControlMessageCallbacks->onError(msg);
+    }
+#endif
+#if PROTOBUF_USE_SYSTEM
+    if (_pSystemMessageCallbacks != nullptr) {
+        _pSystemMessageCallbacks->onError(msg);
+    }
 }
-
+#endif
 #if PROTOBUF_USE_BT_AUDIO
 BluetoothAudioMessage KiSCProto::newBluetoothAudioMessage() {
     BluetoothAudioMessage bam = BluetoothAudioMessage_init_zero;
@@ -287,8 +492,32 @@ RemotecontrolMessage KiSCProto::newRemotecontrolMessage() {
     return rcm;
 }
 #endif
-void UniversalMessageRecvCallback(const esp_now_recv_info *recv_info, const uint8_t *data, int dataLen) {
-    const uint8_t *macAddr = recv_info->src_addr;
+#if PROTOBUF_USE_LIGHT
+LightMessage KiSCProto::newLightMessage() {
+    LightMessage lm = LightMessage_init_zero;
+    return lm;
+}
+#endif
+#if PROTOBUF_USE_MOTOR
+MotorboardFeedback KiSCProto::newMotorMessage() {
+    MotorboardFeedback mm = MotorboardFeedback_init_zero;
+    return mm;
+}
+MotorboardControl KiSCProto::newMotorControlMessage() {
+    MotorboardControl mcm = MotorboardControl_init_zero;
+    return mcm;
+}
+#endif
+#if PROTOBUF_USE_SYSTEM
+SysMessage KiSCProto::newSystemMessage() {
+    SysMessage sm = SysMessage_init_zero;
+    return sm;
+}
+#endif
+// typedef void (*esp_now_recv_cb_t)(const uint8_t *mac_addr, const uint8_t *data, int data_len);
+
+void UniversalMessageRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
+//    const uint8_t *macAddr = recv_info->src_addr;
     saveReceiver(macAddr);
     #ifdef ARDUINO_ARCH_ESP32
     int msgLen = min(ESP_NOW_MAX_DATA_LEN, dataLen-1);
@@ -317,6 +546,33 @@ void UniversalMessageRecvCallback(const esp_now_recv_info *recv_info, const uint
             }
             break;
 #endif
+#if PROTOBUF_USE_LIGHT
+        case MSG_TYPE_LIGHT_MESSAGE:
+            if (kiscproto._pLightMessageCallbacks != nullptr) {
+                LightMessageDecodeMessage(msgLen);
+            }
+            break;
+#endif
+#if PROTOBUF_USE_MOTOR
+        case MSG_TYPE_MOTOR_MESSAGE:
+            if (kiscproto._pMotorMessageCallbacks != nullptr) {
+                MotorMessageDecodeMessage(msgLen);
+            }
+            break;
+        case MSG_TYPE_MOTOR_CONTROL_MESSAGE:        
+            if (kiscproto._pMotorControlMessageCallbacks != nullptr) {
+                MotorControlMessageDecodeMessage(msgLen);
+            }
+            break;
+#endif
+#if PROTOBUF_USE_SYSTEM
+        case MSG_TYPE_SYSTEM_MESSAGE:
+            if (kiscproto._pSystemMessageCallbacks != nullptr) {
+                SystemMessageDecodeMessage(msgLen);
+            }
+            break;
+#endif
+
         default:
         #if USE_LOGGER
             DBGLOG(Error, "Unknown message type: %i", msgType);
@@ -347,6 +603,26 @@ void RemotecontrolMessageSendCallback(const uint8_t *macAddr, esp_now_send_statu
 
 }
 #endif
+#if PROTOBUF_USE_LIGHT
+void LightMessageSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
+
+}
+#endif
+#if PROTOBUF_USE_MOTOR
+void MotorMessageSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
+
+}
+void MotorControlMessageSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
+
+}
+#endif
+
+#if PROTOBUF_USE_SYSTEM
+void SystemMessageSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
+
+}
+#endif
+
 bool KiSCProto::sendMessage(uint32_t msglen, const uint8_t *mac) {
     #ifdef ARDUINO_ARCH_ESP32
     esp_now_peer_info_t peerInfo = {};
