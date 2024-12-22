@@ -39,19 +39,10 @@ typedef struct _MotorControl {
 } MotorControl;
 
 typedef struct _MotorFeedback {
-    int32_t angle;
+    bool enabled;
     int32_t speed;
+    int32_t target;
     uint32_t error;
-    int32_t dcLink;
-    int32_t dcPhaA;
-    int32_t dcPhaB;
-    int32_t dcPhaC;
-    uint32_t chops;
-    int32_t id;
-    int32_t iq;
-    bool hallA;
-    bool hallB;
-    bool hallC;
 } MotorFeedback;
 
 typedef struct _MotorBuzzer {
@@ -104,12 +95,12 @@ extern "C" {
 
 /* Initializer values for message structs */
 #define MotorControl_init_default                {0, 0, _MotorControlType_MIN, _MotorControlMode_MIN, 0, 0, 0, 0, 0, 0, 0}
-#define MotorFeedback_init_default               {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define MotorFeedback_init_default               {0, 0, 0, 0}
 #define MotorBuzzer_init_default                 {0, 0}
 #define MotorboardControl_init_default           {false, MotorControl_init_default, false, MotorControl_init_default, false, MotorBuzzer_init_default}
 #define MotorboardFeedback_init_default          {false, MotorFeedback_init_default, false, MotorFeedback_init_default, 0, 0, 0, 0, 0}
 #define MotorControl_init_zero                   {0, 0, _MotorControlType_MIN, _MotorControlMode_MIN, 0, 0, 0, 0, 0, 0, 0}
-#define MotorFeedback_init_zero                  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define MotorFeedback_init_zero                  {0, 0, 0, 0}
 #define MotorBuzzer_init_zero                    {0, 0}
 #define MotorboardControl_init_zero              {false, MotorControl_init_zero, false, MotorControl_init_zero, false, MotorBuzzer_init_zero}
 #define MotorboardFeedback_init_zero             {false, MotorFeedback_init_zero, false, MotorFeedback_init_zero, 0, 0, 0, 0, 0}
@@ -126,19 +117,10 @@ extern "C" {
 #define MotorControl_phaseAdvancedMax_tag        9
 #define MotorControl_cruiseCtrlEnabled_tag       10
 #define MotorControl_cruiseControlTarget_tag     11
-#define MotorFeedback_angle_tag                  1
+#define MotorFeedback_enabled_tag                1
 #define MotorFeedback_speed_tag                  2
-#define MotorFeedback_error_tag                  3
-#define MotorFeedback_dcLink_tag                 4
-#define MotorFeedback_dcPhaA_tag                 5
-#define MotorFeedback_dcPhaB_tag                 6
-#define MotorFeedback_dcPhaC_tag                 7
-#define MotorFeedback_chops_tag                  8
-#define MotorFeedback_id_tag                     9
-#define MotorFeedback_iq_tag                     10
-#define MotorFeedback_hallA_tag                  11
-#define MotorFeedback_hallB_tag                  12
-#define MotorFeedback_hallC_tag                  13
+#define MotorFeedback_target_tag                 3
+#define MotorFeedback_error_tag                  4
 #define MotorBuzzer_freq_tag                     1
 #define MotorBuzzer_pattern_tag                  2
 #define MotorboardControl_left_tag               1
@@ -169,19 +151,10 @@ X(a, STATIC,   SINGULAR, UINT32,   cruiseControlTarget,  11)
 #define MotorControl_DEFAULT NULL
 
 #define MotorFeedback_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, SINT32,   angle,             1) \
+X(a, STATIC,   SINGULAR, BOOL,     enabled,           1) \
 X(a, STATIC,   SINGULAR, SINT32,   speed,             2) \
-X(a, STATIC,   SINGULAR, UINT32,   error,             3) \
-X(a, STATIC,   SINGULAR, SINT32,   dcLink,            4) \
-X(a, STATIC,   SINGULAR, SINT32,   dcPhaA,            5) \
-X(a, STATIC,   SINGULAR, SINT32,   dcPhaB,            6) \
-X(a, STATIC,   SINGULAR, SINT32,   dcPhaC,            7) \
-X(a, STATIC,   SINGULAR, UINT32,   chops,             8) \
-X(a, STATIC,   SINGULAR, SINT32,   id,                9) \
-X(a, STATIC,   SINGULAR, SINT32,   iq,               10) \
-X(a, STATIC,   SINGULAR, BOOL,     hallA,            11) \
-X(a, STATIC,   SINGULAR, BOOL,     hallB,            12) \
-X(a, STATIC,   SINGULAR, BOOL,     hallC,            13)
+X(a, STATIC,   SINGULAR, SINT32,   target,            3) \
+X(a, STATIC,   SINGULAR, UINT32,   error,             4)
 #define MotorFeedback_CALLBACK NULL
 #define MotorFeedback_DEFAULT NULL
 
@@ -228,12 +201,12 @@ extern const pb_msgdesc_t MotorboardFeedback_msg;
 #define MotorboardFeedback_fields &MotorboardFeedback_msg
 
 /* Maximum encoded size of messages (where known) */
-#define MOTOR_PB_H_MAX_SIZE                      MotorboardFeedback_size
+#define MOTOR_PB_H_MAX_SIZE                      MotorboardControl_size
 #define MotorBuzzer_size                         12
 #define MotorControl_size                        50
-#define MotorFeedback_size                       66
+#define MotorFeedback_size                       20
 #define MotorboardControl_size                   118
-#define MotorboardFeedback_size                  156
+#define MotorboardFeedback_size                  64
 
 #ifdef __cplusplus
 } /* extern "C" */
