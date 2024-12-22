@@ -30,20 +30,10 @@ message MotorControl {
 }
 
 message MotorFeedback {
-    sint32  angle = 1;
+    bool     enabled = 1;
     sint32   speed = 2;
-    uint32   error = 3;
-    sint32   dcLink = 4;
-    sint32   dcPhaA = 5;
-    sint32   dcPhaB = 6;
-    sint32   dcPhaC = 7;
-    uint32  chops = 8;
-    sint32   id = 9;
-    sint32   iq = 10;
-    bool      hallA = 11;
-    bool      hallB = 12;
-    bool      hallC = 13;
-
+    sint32   target = 3;    
+    uint32   error = 4;
 }
 
 message MotorBuzzer {
