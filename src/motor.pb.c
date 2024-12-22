@@ -12,10 +12,17 @@ PB_BIND(MotorControl, MotorControl, AUTO)
 PB_BIND(MotorFeedback, MotorFeedback, AUTO)
 
 
+PB_BIND(MotorBuzzer, MotorBuzzer, AUTO)
+
+
 PB_BIND(MotorboardControl, MotorboardControl, AUTO)
 
 
 PB_BIND(MotorboardFeedback, MotorboardFeedback, 2)
+
+
+
+
 
 
 

@@ -9,20 +9,63 @@
 #error Regenerate this file with the current version of nanopb generator.
 #endif
 
+/* Enum definitions */
+typedef enum _MotorControlType {
+    MotorControlType_COMMUTATION = 0,
+    MotorControlType_SINUSOIDAL = 1,
+    MotorControlType_FIELDORIENTADEDCONTROL = 2
+} MotorControlType;
+
+typedef enum _MotorControlMode {
+    MotorControlMode_OPENMODE = 0,
+    MotorControlMode_VOLTAGE = 1,
+    MotorControlMode_SPEED = 2,
+    MotorControlMode_TORQUE = 3
+} MotorControlMode;
+
 /* Struct definitions */
 typedef struct _MotorControl {
-    char dummy_field;
+    bool enable;
+    int32_t pwm;
+    MotorControlType controlType;
+    MotorControlMode controlMode;
+    uint32_t iMotMax;
+    uint32_t iDCMax;
+    uint32_t nMotMax;
+    uint32_t fieldWeakMax;
+    uint32_t phaseAdvancedMax;
+    bool cruiseCtrlEnabled;
+    uint32_t cruiseControlTarget;
 } MotorControl;
 
 typedef struct _MotorFeedback {
-    char dummy_field;
+    int32_t angle;
+    int32_t speed;
+    uint32_t error;
+    int32_t dcLink;
+    int32_t dcPhaA;
+    int32_t dcPhaB;
+    int32_t dcPhaC;
+    uint32_t chops;
+    int32_t id;
+    int32_t iq;
+    bool hallA;
+    bool hallB;
+    bool hallC;
 } MotorFeedback;
+
+typedef struct _MotorBuzzer {
+    uint32_t freq;
+    uint32_t pattern;
+} MotorBuzzer;
 
 typedef struct _MotorboardControl {
     bool has_left;
     MotorControl left;
     bool has_right;
     MotorControl right;
+    bool has_buzzer;
+    MotorBuzzer buzzer;
 } MotorboardControl;
 
 typedef struct _MotorboardFeedback {
@@ -42,19 +85,65 @@ typedef struct _MotorboardFeedback {
 extern "C" {
 #endif
 
+/* Helper constants for enums */
+#define _MotorControlType_MIN MotorControlType_COMMUTATION
+#define _MotorControlType_MAX MotorControlType_FIELDORIENTADEDCONTROL
+#define _MotorControlType_ARRAYSIZE ((MotorControlType)(MotorControlType_FIELDORIENTADEDCONTROL+1))
+
+#define _MotorControlMode_MIN MotorControlMode_OPENMODE
+#define _MotorControlMode_MAX MotorControlMode_TORQUE
+#define _MotorControlMode_ARRAYSIZE ((MotorControlMode)(MotorControlMode_TORQUE+1))
+
+#define MotorControl_controlType_ENUMTYPE MotorControlType
+#define MotorControl_controlMode_ENUMTYPE MotorControlMode
+
+
+
+
+
+
 /* Initializer values for message structs */
-#define MotorControl_init_default                {0}
-#define MotorFeedback_init_default               {0}
-#define MotorboardControl_init_default           {false, MotorControl_init_default, false, MotorControl_init_default}
+#define MotorControl_init_default                {0, 0, _MotorControlType_MIN, _MotorControlMode_MIN, 0, 0, 0, 0, 0, 0, 0}
+#define MotorFeedback_init_default               {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define MotorBuzzer_init_default                 {0, 0}
+#define MotorboardControl_init_default           {false, MotorControl_init_default, false, MotorControl_init_default, false, MotorBuzzer_init_default}
 #define MotorboardFeedback_init_default          {false, MotorFeedback_init_default, false, MotorFeedback_init_default, 0, 0, 0, 0, 0}
-#define MotorControl_init_zero                   {0}
-#define MotorFeedback_init_zero                  {0}
-#define MotorboardControl_init_zero              {false, MotorControl_init_zero, false, MotorControl_init_zero}
+#define MotorControl_init_zero                   {0, 0, _MotorControlType_MIN, _MotorControlMode_MIN, 0, 0, 0, 0, 0, 0, 0}
+#define MotorFeedback_init_zero                  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define MotorBuzzer_init_zero                    {0, 0}
+#define MotorboardControl_init_zero              {false, MotorControl_init_zero, false, MotorControl_init_zero, false, MotorBuzzer_init_zero}
 #define MotorboardFeedback_init_zero             {false, MotorFeedback_init_zero, false, MotorFeedback_init_zero, 0, 0, 0, 0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
+#define MotorControl_enable_tag                  1
+#define MotorControl_pwm_tag                     2
+#define MotorControl_controlType_tag             3
+#define MotorControl_controlMode_tag             4
+#define MotorControl_iMotMax_tag                 5
+#define MotorControl_iDCMax_tag                  6
+#define MotorControl_nMotMax_tag                 7
+#define MotorControl_fieldWeakMax_tag            8
+#define MotorControl_phaseAdvancedMax_tag        9
+#define MotorControl_cruiseCtrlEnabled_tag       10
+#define MotorControl_cruiseControlTarget_tag     11
+#define MotorFeedback_angle_tag                  1
+#define MotorFeedback_speed_tag                  2
+#define MotorFeedback_error_tag                  3
+#define MotorFeedback_dcLink_tag                 4
+#define MotorFeedback_dcPhaA_tag                 5
+#define MotorFeedback_dcPhaB_tag                 6
+#define MotorFeedback_dcPhaC_tag                 7
+#define MotorFeedback_chops_tag                  8
+#define MotorFeedback_id_tag                     9
+#define MotorFeedback_iq_tag                     10
+#define MotorFeedback_hallA_tag                  11
+#define MotorFeedback_hallB_tag                  12
+#define MotorFeedback_hallC_tag                  13
+#define MotorBuzzer_freq_tag                     1
+#define MotorBuzzer_pattern_tag                  2
 #define MotorboardControl_left_tag               1
 #define MotorboardControl_right_tag              2
+#define MotorboardControl_buzzer_tag             3
 #define MotorboardFeedback_left_tag              1
 #define MotorboardFeedback_right_tag             2
 #define MotorboardFeedback_voltage_tag           3
@@ -65,22 +154,52 @@ extern "C" {
 
 /* Struct field encoding specification for nanopb */
 #define MotorControl_FIELDLIST(X, a) \
-
+X(a, STATIC,   SINGULAR, BOOL,     enable,            1) \
+X(a, STATIC,   SINGULAR, SINT32,   pwm,               2) \
+X(a, STATIC,   SINGULAR, UENUM,    controlType,       3) \
+X(a, STATIC,   SINGULAR, UENUM,    controlMode,       4) \
+X(a, STATIC,   SINGULAR, UINT32,   iMotMax,           5) \
+X(a, STATIC,   SINGULAR, UINT32,   iDCMax,            6) \
+X(a, STATIC,   SINGULAR, UINT32,   nMotMax,           7) \
+X(a, STATIC,   SINGULAR, UINT32,   fieldWeakMax,      8) \
+X(a, STATIC,   SINGULAR, UINT32,   phaseAdvancedMax,   9) \
+X(a, STATIC,   SINGULAR, BOOL,     cruiseCtrlEnabled,  10) \
+X(a, STATIC,   SINGULAR, UINT32,   cruiseControlTarget,  11)
 #define MotorControl_CALLBACK NULL
 #define MotorControl_DEFAULT NULL
 
 #define MotorFeedback_FIELDLIST(X, a) \
-
+X(a, STATIC,   SINGULAR, SINT32,   angle,             1) \
+X(a, STATIC,   SINGULAR, SINT32,   speed,             2) \
+X(a, STATIC,   SINGULAR, UINT32,   error,             3) \
+X(a, STATIC,   SINGULAR, SINT32,   dcLink,            4) \
+X(a, STATIC,   SINGULAR, SINT32,   dcPhaA,            5) \
+X(a, STATIC,   SINGULAR, SINT32,   dcPhaB,            6) \
+X(a, STATIC,   SINGULAR, SINT32,   dcPhaC,            7) \
+X(a, STATIC,   SINGULAR, UINT32,   chops,             8) \
+X(a, STATIC,   SINGULAR, SINT32,   id,                9) \
+X(a, STATIC,   SINGULAR, SINT32,   iq,               10) \
+X(a, STATIC,   SINGULAR, BOOL,     hallA,            11) \
+X(a, STATIC,   SINGULAR, BOOL,     hallB,            12) \
+X(a, STATIC,   SINGULAR, BOOL,     hallC,            13)
 #define MotorFeedback_CALLBACK NULL
 #define MotorFeedback_DEFAULT NULL
 
+#define MotorBuzzer_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UINT32,   freq,              1) \
+X(a, STATIC,   SINGULAR, UINT32,   pattern,           2)
+#define MotorBuzzer_CALLBACK NULL
+#define MotorBuzzer_DEFAULT NULL
+
 #define MotorboardControl_FIELDLIST(X, a) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  left,              1) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  right,             2)
+X(a, STATIC,   OPTIONAL, MESSAGE,  right,             2) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  buzzer,            3)
 #define MotorboardControl_CALLBACK NULL
 #define MotorboardControl_DEFAULT NULL
 #define MotorboardControl_left_MSGTYPE MotorControl
 #define MotorboardControl_right_MSGTYPE MotorControl
+#define MotorboardControl_buzzer_MSGTYPE MotorBuzzer
 
 #define MotorboardFeedback_FIELDLIST(X, a) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  left,              1) \
@@ -97,21 +216,24 @@ X(a, STATIC,   SINGULAR, BOOL,     connected,       100)
 
 extern const pb_msgdesc_t MotorControl_msg;
 extern const pb_msgdesc_t MotorFeedback_msg;
+extern const pb_msgdesc_t MotorBuzzer_msg;
 extern const pb_msgdesc_t MotorboardControl_msg;
 extern const pb_msgdesc_t MotorboardFeedback_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define MotorControl_fields &MotorControl_msg
 #define MotorFeedback_fields &MotorFeedback_msg
+#define MotorBuzzer_fields &MotorBuzzer_msg
 #define MotorboardControl_fields &MotorboardControl_msg
 #define MotorboardFeedback_fields &MotorboardFeedback_msg
 
 /* Maximum encoded size of messages (where known) */
 #define MOTOR_PB_H_MAX_SIZE                      MotorboardFeedback_size
-#define MotorControl_size                        0
-#define MotorFeedback_size                       0
-#define MotorboardControl_size                   4
-#define MotorboardFeedback_size                  24
+#define MotorBuzzer_size                         12
+#define MotorControl_size                        50
+#define MotorFeedback_size                       66
+#define MotorboardControl_size                   118
+#define MotorboardFeedback_size                  156
 
 #ifdef __cplusplus
 } /* extern "C" */

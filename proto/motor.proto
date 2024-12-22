@@ -52,9 +52,9 @@ message MotorBuzzer {
 }
 
 message MotorboardControl {
-    MotorControl left = 1;
-    MotorControl right = 2;
-    optional MotorBuzzer = 3;
+    optional MotorControl left = 1;
+    optional MotorControl right = 2;
+    optional MotorBuzzer buzzer = 3;
 }
 
 message MotorboardFeedback {
