@@ -2,17 +2,59 @@
 
 syntax = "proto3";
 
-message MotorControl {
+enum MotorControlType {
+    COMMUTATION = 0;
+    SINUSOIDAL = 1;
+    FIELDORIENTADEDCONTROL = 2;
+}
 
+enum MotorControlMode {
+    OPENMODE = 0;
+    VOLTAGE = 1;
+    SPEED = 2;
+    TORQUE = 3;
+}
+
+message MotorControl {
+    bool    enable = 1;
+    sint32  pwm = 2;
+    MotorControlType    controlType = 3;
+    MotorControlMode    controlMode = 4;
+    uint32 iMotMax = 5;
+    uint32 iDCMax = 6;
+    uint32 nMotMax = 7;
+    uint32 fieldWeakMax = 8;
+    uint32 phaseAdvancedMax = 9;
+    bool cruiseCtrlEnabled = 10;
+    uint32 cruiseControlTarget = 11;
 }
 
 message MotorFeedback {
+    sint32  angle = 1;
+    sint32   speed = 2;
+    uint32   error = 3;
+    sint32   dcLink = 4;
+    sint32   dcPhaA = 5;
+    sint32   dcPhaB = 6;
+    sint32   dcPhaC = 7;
+    uint32  chops = 8;
+    sint32   id = 9;
+    sint32   iq = 10;
+    bool      hallA = 11;
+    bool      hallB = 12;
+    bool      hallC = 13;
 
+}
+
+message MotorBuzzer {
+    uint32  freq = 1;
+    uint32  pattern = 2;
 }
 
 message MotorboardControl {
     MotorControl left = 1;
     MotorControl right = 2;
+    optional MotorBuzzer = 3;
 }
 
 message MotorboardFeedback {
