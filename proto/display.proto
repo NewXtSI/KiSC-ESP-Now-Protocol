@@ -1,0 +1,7 @@
+// Light messages
+
+syntax = "proto3";
+
+message DisplayMessage {
+    
+}

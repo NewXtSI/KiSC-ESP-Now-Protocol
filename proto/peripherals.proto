@@ -1,0 +1,9 @@
+// Motor Messages
+
+syntax = "proto3";
+
+message PeripheralsFeedbackMessage {
+}
+
+message PeripheralsControlMessage {
+}

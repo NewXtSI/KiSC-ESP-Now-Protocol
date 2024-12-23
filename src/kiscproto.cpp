@@ -22,6 +22,17 @@ MotorboardControl _mcm = MotorboardControl_init_zero;
 #if PROTOBUF_USE_SYSTEM
 SysMessage _sm = SysMessage_init_zero;
 #endif
+#if PROTOBUF_USE_SOUND_GENERATOR
+SoundGeneratorMessage _sgm = SoundGeneratorMessage_init_zero;
+SoundGeneratorControlMessage _sgcm = SoundGeneratorControlMessage_init_zero;
+#endif
+#if PROTOBUF_USE_DISPLAY
+DisplayMessage _dm = DisplayMessage_init_zero;
+#endif
+#if PROTOBUF_USE_PERIPHERALS
+PeripheralsControlMessage _pm = PeripheralsControlMessage_init_zero;
+PeripheralsFeedbackMessage _pfm = PeripheralsFeedbackMessage_init_zero;
+#endif
 
 
 /// general buffer for msg sender
@@ -53,6 +64,19 @@ KiSCProto::KiSCProto() {
 #if PROTOBUF_USE_SYSTEM
     _pSystemMessageCallbacks = nullptr;
 #endif
+#if PROTOBUF_USE_DISPLAY
+    _pDisplayMessageCallbacks = nullptr;
+#endif
+#if PROTOBUF_USE_SOUND_GENERATOR
+    _pSoundGeneratorMessageCallbacks = nullptr;
+    _pSoundGeneratorControlMessageCallbacks = nullptr;
+#endif
+#if PROTOBUF_USE_PERIPHERALS
+    _pPeripheralsMessageCallbacks = nullptr;
+    _pPeripheralsFeedbackCallbacks = nullptr;
+#endif
+
+
 
     uint32_t chipId = 0;
     #ifdef ARDUINO_ARCH_ESP32
@@ -105,6 +129,40 @@ KiSCProto::setSystemMessageCallbacks(SystemMessageCallbacks* pCallbacks) {
     _pSystemMessageCallbacks = pCallbacks;
 }
 #endif
+
+#if PROTOBUF_USE_SOUND_GENERATOR
+void
+KiSCProto::setSoundGeneratorMessageCallbacks(SoundGeneratorMessageCallbacks* pCallbacks) {
+    _pSoundGeneratorMessageCallbacks = pCallbacks;
+}
+void
+KiSCProto::setSoundGeneratorControlMessageCallbacks(SoundGeneratorControlMessageCallbacks* pCallbacks) {
+    _pSoundGeneratorControlMessageCallbacks = pCallbacks;
+}
+#endif
+
+#if PROTOBUF_USE_DISPLAY
+void
+KiSCProto::setDisplayMessageCallbacks(DisplayMessageCallbacks* pCallbacks) {
+    _pDisplayMessageCallbacks = pCallbacks;
+}
+#endif
+
+#if PROTOBUF_USE_PERIPHERALS
+void
+KiSCProto::setPeripheralsMessageCallbacks(PeripheralsMessageCallbacks* pCallbacks) {
+    _pPeripheralsMessageCallbacks = pCallbacks;
+}
+void
+KiSCProto::setPeripheralsFeedbackCallbacks(PeripheralsFeedbackCallbacks* pCallbacks) {
+    _pPeripheralsFeedbackCallbacks = pCallbacks;
+}
+#endif
+
+
+KiSCProto* KiSCProto::getInstance() {
+    return this;
+}
 
 uint32_t getReceiverId(const uint8_t *macAddr){
     return macAddr[0]+macAddr[1]+macAddr[2]+macAddr[3]+macAddr[4]+macAddr[5];
@@ -184,7 +242,27 @@ bool KiSCProto::sendSystemMessage(SysMessage sm) {
     return sendMessage(encodeSystemMessage(sm));
 }
 #endif
-
+#if PROTOBUF_USE_SOUND_GENERATOR
+bool KiSCProto::sendSoundGeneratorMessage(SoundGeneratorMessage sgm) {
+    return sendMessage(encodeSoundGeneratorMessage(sgm));
+}
+bool KiSCProto::sendSoundGeneratorControlMessage(SoundGeneratorControlMessage sgcm) {
+    return sendMessage(encodeSoundGeneratorControlMessage(sgcm));
+}
+#endif
+#if PROTOBUF_USE_DISPLAY
+bool KiSCProto::sendDisplayMessage(DisplayMessage dm) {
+    return sendMessage(encodeDisplayMessage(dm));
+}
+#endif
+#if PROTOBUF_USE_PERIPHERALS
+bool KiSCProto::sendPeripheralsMessage(PeripheralsControlMessage pm) {
+    return sendMessage(encodePeripheralsMessage(pm));
+}
+bool KiSCProto::sendPeripheralsFeedbackMessage(PeripheralsFeedbackMessage pfm) {
+    return sendMessage(encodePeripheralsFeedbackMessage(pfm));
+}
+#endif
 
 #if PROTOBUF_USE_BT_AUDIO
 typedef struct
@@ -337,6 +415,83 @@ size_t KiSCProto::encodeSystemMessage(SysMessage sm) {
     return message_length+1;
 }
 #endif
+#if PROTOBUF_USE_SOUND_GENERATOR
+size_t KiSCProto::encodeSoundGeneratorMessage(SoundGeneratorMessage sgm) {
+    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
+    bool status = pb_encode(&stream, SoundGeneratorMessage_fields, &sgm);
+    send_buffer[0] = MSG_TYPE_SOUND_GENERATOR_MESSAGE;
+    #ifndef ARDUINO_ARCH_ESP32
+    delay(5); // ESP8266 needs it or die
+    #endif
+    size_t message_length = stream.bytes_written;
+    if (!status) {
+//        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
+        return 0;
+    }
+    return message_length+1;
+}
+size_t KiSCProto::encodeSoundGeneratorControlMessage(SoundGeneratorControlMessage sgcm) {
+    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
+    bool status = pb_encode(&stream, SoundGeneratorControlMessage_fields, &sgcm);
+    send_buffer[0] = MSG_TYPE_SOUND_GENERATOR_CONTROL_MESSAGE;
+    #ifndef ARDUINO_ARCH_ESP32
+    delay(5); // ESP8266 needs it or die
+    #endif
+    size_t message_length = stream.bytes_written;
+    if (!status) {
+//        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
+        return 0;
+    }
+    return message_length+1;
+}
+#endif
+#if PROTOBUF_USE_DISPLAY
+size_t KiSCProto::encodeDisplayMessage(DisplayMessage dm) {
+    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
+    bool status = pb_encode(&stream, DisplayMessage_fields, &dm);
+    send_buffer[0] = MSG_TYPE_DISPLAY_MESSAGE;
+    #ifndef ARDUINO_ARCH_ESP32
+    delay(5); // ESP8266 needs it or die
+    #endif
+    size_t message_length = stream.bytes_written;
+    if (!status) {
+//        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
+        return 0;
+    }
+    return message_length+1;
+}
+#endif
+#if PROTOBUF_USE_PERIPHERALS
+size_t KiSCProto::encodePeripheralsMessage(PeripheralsControlMessage pm) {
+    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
+    bool status = pb_encode(&stream, PeripheralsControlMessage_fields, &pm);
+    send_buffer[0] = MSG_TYPE_PERIPHERALS_MESSAGE;
+    #ifndef ARDUINO_ARCH_ESP32
+    delay(5); // ESP8266 needs it or die
+    #endif
+    size_t message_length = stream.bytes_written;
+    if (!status) {
+//        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
+        return 0;
+    }
+    return message_length+1;
+}
+size_t KiSCProto::encodePeripheralsFeedbackMessage(PeripheralsFeedbackMessage pfm) {
+    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
+    bool status = pb_encode(&stream, PeripheralsFeedbackMessage_fields, &pfm);
+    send_buffer[0] = MSG_TYPE_PERIPHERALS_FEEDBACK;
+    #ifndef ARDUINO_ARCH_ESP32
+    delay(5); // ESP8266 needs it or die
+    #endif
+    size_t message_length = stream.bytes_written;
+    if (!status) {
+//        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
+        return 0;
+    }
+    return message_length+1;
+}
+#endif
+
 #if PROTOBUF_USE_BT_AUDIO
 bool BluetoothAudioMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
@@ -402,6 +557,45 @@ bool LightMessageDecodeMessage(uint16_t message_length) {
 }
 #endif
 
+#if PROTOBUF_USE_SOUND_GENERATOR
+bool SoundGeneratorMessageDecodeMessage(uint16_t message_length) {
+    pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
+    bool status = pb_decode(&stream, SoundGeneratorMessage_fields, &_sgm);
+    if (!status) {
+        return false;
+    }
+    if (kiscproto._pSoundGeneratorMessageCallbacks != nullptr) {
+        kiscproto._pSoundGeneratorMessageCallbacks->onSoundGeneratorMessage(_sgm);
+    }
+    return true;
+}
+bool SoundGeneratorControlMessageDecodeMessage(uint16_t message_length) {
+    pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
+    bool status = pb_decode(&stream, SoundGeneratorControlMessage_fields, &_sgcm);
+    if (!status) {
+        return false;
+    }
+    if (kiscproto._pSoundGeneratorControlMessageCallbacks != nullptr) {
+        kiscproto._pSoundGeneratorControlMessageCallbacks->onSoundGeneratorControlMessage(_sgcm);
+    }
+    return true;
+}
+#endif
+#if PROTOBUF_USE_DISPLAY
+bool DisplayMessageDecodeMessage(uint16_t message_length) {
+    pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
+    bool status = pb_decode(&stream, DisplayMessage_fields, &_dm);
+    if (!status) {
+        return false;
+    }
+    if (kiscproto._pDisplayMessageCallbacks != nullptr) {
+        kiscproto._pDisplayMessageCallbacks->onDisplayMessage(_dm);
+    }
+    return true;
+}
+#endif
+
+
 #if PROTOBUF_USE_MOTOR
 bool MotorMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
@@ -439,6 +633,31 @@ bool SystemMessageDecodeMessage(uint16_t message_length) {
     return true;
 }
 #endif
+#if PROTOBUF_USE_PERIPHERALS
+bool PeripheralsMessageDecodeMessage(uint16_t message_length) {
+    pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
+    bool status = pb_decode(&stream, PeripheralsControlMessage_fields, &_pm);
+    if (!status) {
+        return false;
+    }
+    if (kiscproto._pPeripheralsMessageCallbacks != nullptr) {
+        kiscproto._pPeripheralsMessageCallbacks->onPeripheralsMessage(_pm);
+    }
+    return true;
+}
+bool PeripheralsFeedbackMessageDecodeMessage(uint16_t message_length) {
+    pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
+    bool status = pb_decode(&stream, PeripheralsFeedbackMessage_fields, &_pfm);
+    if (!status) {
+        return false;
+    }
+    if (kiscproto._pPeripheralsFeedbackCallbacks != nullptr) {
+        kiscproto._pPeripheralsFeedbackCallbacks->onPeripheralsFeedback(_pfm);
+    }
+    return true;
+}
+#endif
+
 
 void
 KiSCProto::reportError(const char *msg) {
@@ -473,8 +692,32 @@ KiSCProto::reportError(const char *msg) {
     if (_pSystemMessageCallbacks != nullptr) {
         _pSystemMessageCallbacks->onError(msg);
     }
-}
 #endif
+#if PROTOBUF_USE_SOUND_GENERATOR
+    if (_pSoundGeneratorMessageCallbacks != nullptr) {
+        _pSoundGeneratorMessageCallbacks->onError(msg);
+    }
+    if (_pSoundGeneratorControlMessageCallbacks != nullptr) {
+        _pSoundGeneratorControlMessageCallbacks->onError(msg);
+    }
+#endif
+#if PROTOBUF_USE_DISPLAY
+    if (_pDisplayMessageCallbacks != nullptr) {
+        _pDisplayMessageCallbacks->onError(msg);
+    }
+#endif
+#if PROTOBUF_USE_PERIPHERALS
+    if (_pPeripheralsMessageCallbacks != nullptr) {
+        _pPeripheralsMessageCallbacks->onError(msg);
+    }
+    if (_pPeripheralsFeedbackCallbacks != nullptr) {
+        _pPeripheralsFeedbackCallbacks->onError(msg);
+    }
+#endif
+
+
+}
+
 #if PROTOBUF_USE_BT_AUDIO
 BluetoothAudioMessage KiSCProto::newBluetoothAudioMessage() {
     BluetoothAudioMessage bam = BluetoothAudioMessage_init_zero;
@@ -514,6 +757,24 @@ SysMessage KiSCProto::newSystemMessage() {
     return sm;
 }
 #endif
+#if PROTOBUF_USE_SOUND_GENERATOR
+SoundGeneratorMessage KiSCProto::newSoundGeneratorMessage() {
+    SoundGeneratorMessage sgm = SoundGeneratorMessage_init_zero;
+    return sgm;
+}
+SoundGeneratorControlMessage KiSCProto::newSoundGeneratorControlMessage() {
+    SoundGeneratorControlMessage sgcm = SoundGeneratorControlMessage_init_zero;
+    return sgcm;
+}
+#endif
+#if PROTOBUF_USE_DISPLAY
+DisplayMessage KiSCProto::newDisplayMessage() {
+    DisplayMessage dm = DisplayMessage_init_zero;
+    return dm;
+}
+#endif
+
+
 // typedef void (*esp_now_recv_cb_t)(const uint8_t *mac_addr, const uint8_t *data, int data_len);
 
 void UniversalMessageRecvCallback(const uint8_t *macAddr, const uint8_t *data, int dataLen) {
@@ -572,6 +833,39 @@ void UniversalMessageRecvCallback(const uint8_t *macAddr, const uint8_t *data, i
             }
             break;
 #endif
+#if PROTOBUF_USE_SOUND_GENERATOR
+        case MSG_TYPE_SOUND_GENERATOR_MESSAGE:
+            if (kiscproto._pSoundGeneratorMessageCallbacks != nullptr) {
+                SoundGeneratorMessageDecodeMessage(msgLen);
+            }
+            break;
+        case MSG_TYPE_SOUND_GENERATOR_CONTROL_MESSAGE:
+            if (kiscproto._pSoundGeneratorControlMessageCallbacks != nullptr) {
+                SoundGeneratorControlMessageDecodeMessage(msgLen);
+            }
+            break;
+#endif
+#if PROTOBUF_USE_DISPLAY
+        case MSG_TYPE_DISPLAY_MESSAGE:
+            if (kiscproto._pDisplayMessageCallbacks != nullptr) {
+                DisplayMessageDecodeMessage(msgLen);
+            }
+            break;
+#endif
+#if PROTOBUF_USE_PERIPHERALS
+        case MSG_TYPE_PERIPHERALS_MESSAGE:
+            if (kiscproto._pPeripheralsMessageCallbacks != nullptr) {
+                PeripheralsMessageDecodeMessage(msgLen);
+            }
+            break;
+        case MSG_TYPE_PERIPHERALS_FEEDBACK:
+            if (kiscproto._pPeripheralsFeedbackCallbacks != nullptr) {
+                PeripheralsFeedbackMessageDecodeMessage(msgLen);
+            }
+            break;
+#endif
+
+
 
         default:
         #if USE_LOGGER
@@ -622,6 +916,28 @@ void SystemMessageSendCallback(const uint8_t *macAddr, esp_now_send_status_t sta
 
 }
 #endif
+#if PROTOBUF_USE_SOUND_GENERATOR
+void SoundGeneratorMessageSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
+
+}
+void SoundGeneratorControlMessageSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
+
+}
+#endif
+#if PROTOBUF_USE_DISPLAY
+void DisplayMessageSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
+
+}
+#endif
+#if PROTOBUF_USE_PERIPHERALS
+void PeripheralsMessageSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
+
+}
+void PeripheralsFeedbackMessageSendCallback(const uint8_t *macAddr, esp_now_send_status_t status) {
+
+}
+#endif
+
 
 bool KiSCProto::sendMessage(uint32_t msglen, const uint8_t *mac) {
     #ifdef ARDUINO_ARCH_ESP32

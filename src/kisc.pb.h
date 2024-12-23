@@ -10,6 +10,8 @@
 #include "btaudio.pb.h"
 #include "soundgenerator.pb.h"
 #include "remotecontrol.pb.h"
+#include "display.pb.h"
+#include "peripherals.pb.h"
 
 #if PB_PROTO_HEADER_VERSION != 40
 #error Regenerate this file with the current version of nanopb generator.

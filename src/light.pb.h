@@ -9,9 +9,91 @@
 #error Regenerate this file with the current version of nanopb generator.
 #endif
 
+/* Struct definitions */
+typedef struct _LightMessage {
+    bool indicatorBrightTime;
+    bool indicatorLeft;
+    bool indicatorRight;
+    bool brakeLight;
+    bool reverseLight;
+    bool hazardLight;
+    bool headLight;
+    bool highBeam;
+    bool fogLight;
+    bool tailLight;
+    bool interiorLight;
+    bool ambientLight;
+    bool emergencyLight;
+    bool warningLight;
+    bool simulateFlame;
+    bool dashLight;
+    bool engineLight;
+    float displayBrightness; /* 0-1.0 */
+    bool displayOn;
+} LightMessage;
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Initializer values for message structs */
+#define LightMessage_init_default                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define LightMessage_init_zero                   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+
+/* Field tags (for use in manual encoding/decoding) */
+#define LightMessage_indicatorBrightTime_tag     1
+#define LightMessage_indicatorLeft_tag           2
+#define LightMessage_indicatorRight_tag          3
+#define LightMessage_brakeLight_tag              4
+#define LightMessage_reverseLight_tag            5
+#define LightMessage_hazardLight_tag             6
+#define LightMessage_headLight_tag               7
+#define LightMessage_highBeam_tag                8
+#define LightMessage_fogLight_tag                9
+#define LightMessage_tailLight_tag               10
+#define LightMessage_interiorLight_tag           11
+#define LightMessage_ambientLight_tag            12
+#define LightMessage_emergencyLight_tag          13
+#define LightMessage_warningLight_tag            14
+#define LightMessage_simulateFlame_tag           20
+#define LightMessage_dashLight_tag               21
+#define LightMessage_engineLight_tag             22
+#define LightMessage_displayBrightness_tag       23
+#define LightMessage_displayOn_tag               24
+
+/* Struct field encoding specification for nanopb */
+#define LightMessage_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, BOOL,     indicatorBrightTime,   1) \
+X(a, STATIC,   SINGULAR, BOOL,     indicatorLeft,     2) \
+X(a, STATIC,   SINGULAR, BOOL,     indicatorRight,    3) \
+X(a, STATIC,   SINGULAR, BOOL,     brakeLight,        4) \
+X(a, STATIC,   SINGULAR, BOOL,     reverseLight,      5) \
+X(a, STATIC,   SINGULAR, BOOL,     hazardLight,       6) \
+X(a, STATIC,   SINGULAR, BOOL,     headLight,         7) \
+X(a, STATIC,   SINGULAR, BOOL,     highBeam,          8) \
+X(a, STATIC,   SINGULAR, BOOL,     fogLight,          9) \
+X(a, STATIC,   SINGULAR, BOOL,     tailLight,        10) \
+X(a, STATIC,   SINGULAR, BOOL,     interiorLight,    11) \
+X(a, STATIC,   SINGULAR, BOOL,     ambientLight,     12) \
+X(a, STATIC,   SINGULAR, BOOL,     emergencyLight,   13) \
+X(a, STATIC,   SINGULAR, BOOL,     warningLight,     14) \
+X(a, STATIC,   SINGULAR, BOOL,     simulateFlame,    20) \
+X(a, STATIC,   SINGULAR, BOOL,     dashLight,        21) \
+X(a, STATIC,   SINGULAR, BOOL,     engineLight,      22) \
+X(a, STATIC,   SINGULAR, FLOAT,    displayBrightness,  23) \
+X(a, STATIC,   SINGULAR, BOOL,     displayOn,        24)
+#define LightMessage_CALLBACK NULL
+#define LightMessage_DEFAULT NULL
+
+extern const pb_msgdesc_t LightMessage_msg;
+
+/* Defines for backwards compatibility with code written before nanopb-0.4.0 */
+#define LightMessage_fields &LightMessage_msg
+
+/* Maximum encoded size of messages (where known) */
+#define LIGHT_PB_H_MAX_SIZE                      LightMessage_size
+#define LightMessage_size                        46
 
 #ifdef __cplusplus
 } /* extern "C" */

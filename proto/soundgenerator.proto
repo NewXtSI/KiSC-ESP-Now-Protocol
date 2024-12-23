@@ -1,3 +1,25 @@
 // Soundgenerator Messages 
 
 syntax = "proto3";
+
+message SoundGeneratorMessage {
+}
+
+message SoundGeneratorControlMessage {
+    bool enable = 1;
+    float volume = 2;
+    bool engineOn = 3;
+    int32 rpm = 4;
+    int32 gear = 5;
+    int32 speed = 6;
+    int32 throttle = 7;
+
+    bool effectWastegate = 20;    
+    bool effectShift = 21;
+    bool effectBackfire = 22;
+
+    bool effectHorn = 30;
+    bool effectSiren = 31;
+    bool effectAlarm = 32;
+    bool effectIndicator = 33;
+}

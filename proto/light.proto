@@ -1,3 +1,26 @@
 // Light messages
 
 syntax = "proto3";
+
+message LightMessage {
+    bool indicatorBrightTime = 1;
+    bool indicatorLeft = 2;
+    bool indicatorRight = 3;
+    bool brakeLight = 4;
+    bool reverseLight = 5;
+    bool hazardLight = 6;
+    bool headLight = 7;
+    bool highBeam = 8;
+    bool fogLight = 9;
+    bool tailLight = 10;
+    bool interiorLight = 11;
+    bool ambientLight = 12;
+    bool emergencyLight = 13;
+    bool warningLight = 14;
+
+    bool simulateFlame = 20;
+    bool dashLight = 21;
+    bool engineLight = 22;
+    float displayBrightness = 23; // 0-1.0
+    bool displayOn = 24;
+}

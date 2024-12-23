@@ -6,4 +6,5 @@ import public "motor.proto";
 import public "btaudio.proto";
 import public "soundgenerator.proto";
 import public "remotecontrol.proto";
-
+import public "display.proto";
+import public "peripherals.proto";

@@ -9,9 +9,90 @@
 #error Regenerate this file with the current version of nanopb generator.
 #endif
 
+/* Struct definitions */
+typedef struct _SoundGeneratorMessage {
+    char dummy_field;
+} SoundGeneratorMessage;
+
+typedef struct _SoundGeneratorControlMessage {
+    bool enable;
+    float volume;
+    bool engineOn;
+    int32_t rpm;
+    int32_t gear;
+    int32_t speed;
+    int32_t throttle;
+    bool effectWastegate;
+    bool effectShift;
+    bool effectBackfire;
+    bool effectHorn;
+    bool effectSiren;
+    bool effectAlarm;
+    bool effectIndicator;
+} SoundGeneratorControlMessage;
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Initializer values for message structs */
+#define SoundGeneratorMessage_init_default       {0}
+#define SoundGeneratorControlMessage_init_default {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define SoundGeneratorMessage_init_zero          {0}
+#define SoundGeneratorControlMessage_init_zero   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+
+/* Field tags (for use in manual encoding/decoding) */
+#define SoundGeneratorControlMessage_enable_tag  1
+#define SoundGeneratorControlMessage_volume_tag  2
+#define SoundGeneratorControlMessage_engineOn_tag 3
+#define SoundGeneratorControlMessage_rpm_tag     4
+#define SoundGeneratorControlMessage_gear_tag    5
+#define SoundGeneratorControlMessage_speed_tag   6
+#define SoundGeneratorControlMessage_throttle_tag 7
+#define SoundGeneratorControlMessage_effectWastegate_tag 20
+#define SoundGeneratorControlMessage_effectShift_tag 21
+#define SoundGeneratorControlMessage_effectBackfire_tag 22
+#define SoundGeneratorControlMessage_effectHorn_tag 30
+#define SoundGeneratorControlMessage_effectSiren_tag 31
+#define SoundGeneratorControlMessage_effectAlarm_tag 32
+#define SoundGeneratorControlMessage_effectIndicator_tag 33
+
+/* Struct field encoding specification for nanopb */
+#define SoundGeneratorMessage_FIELDLIST(X, a) \
+
+#define SoundGeneratorMessage_CALLBACK NULL
+#define SoundGeneratorMessage_DEFAULT NULL
+
+#define SoundGeneratorControlMessage_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, BOOL,     enable,            1) \
+X(a, STATIC,   SINGULAR, FLOAT,    volume,            2) \
+X(a, STATIC,   SINGULAR, BOOL,     engineOn,          3) \
+X(a, STATIC,   SINGULAR, INT32,    rpm,               4) \
+X(a, STATIC,   SINGULAR, INT32,    gear,              5) \
+X(a, STATIC,   SINGULAR, INT32,    speed,             6) \
+X(a, STATIC,   SINGULAR, INT32,    throttle,          7) \
+X(a, STATIC,   SINGULAR, BOOL,     effectWastegate,  20) \
+X(a, STATIC,   SINGULAR, BOOL,     effectShift,      21) \
+X(a, STATIC,   SINGULAR, BOOL,     effectBackfire,   22) \
+X(a, STATIC,   SINGULAR, BOOL,     effectHorn,       30) \
+X(a, STATIC,   SINGULAR, BOOL,     effectSiren,      31) \
+X(a, STATIC,   SINGULAR, BOOL,     effectAlarm,      32) \
+X(a, STATIC,   SINGULAR, BOOL,     effectIndicator,  33)
+#define SoundGeneratorControlMessage_CALLBACK NULL
+#define SoundGeneratorControlMessage_DEFAULT NULL
+
+extern const pb_msgdesc_t SoundGeneratorMessage_msg;
+extern const pb_msgdesc_t SoundGeneratorControlMessage_msg;
+
+/* Defines for backwards compatibility with code written before nanopb-0.4.0 */
+#define SoundGeneratorMessage_fields &SoundGeneratorMessage_msg
+#define SoundGeneratorControlMessage_fields &SoundGeneratorControlMessage_msg
+
+/* Maximum encoded size of messages (where known) */
+#define SOUNDGENERATOR_PB_H_MAX_SIZE             SoundGeneratorControlMessage_size
+#define SoundGeneratorControlMessage_size        74
+#define SoundGeneratorMessage_size               0
 
 #ifdef __cplusplus
 } /* extern "C" */

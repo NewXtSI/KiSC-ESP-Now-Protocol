@@ -1,7 +1,7 @@
 #ifndef INCLUDE_KISCPROTO_INCLUDED
 #define INCLUDE_KISCPROTO_INCLUDED
 
-
+#define USE_LOGGER 1
 /*
 henni@Desktop MINGW64 /d/Development/KiSC/KiSC-Dashboard/KiSC-ESP-Now-Protocol/src (ProtoBuf)
 $ python3 ../../.pio/libdeps/esp32dev/Nanopb/generator/nanopb_generator.py kisc.proto 
@@ -21,28 +21,32 @@ Writing to kisc.pb.h and kisc.pb.c
 #define PROTOBUF_USE_SOUND_GENERATOR   1
 #define PROTOBUF_USE_DISPLAY           1
 #define PROTOBUF_USE_SYSTEM            1  
+#define PROTOBUF_USE_PERIPHERALS       1
 #else
 #ifndef PROTOBUF_USE_BT_AUDIO
-#define PROTOBUF_USE_BT_AUDIO          0
+#define PROTOBUF_USE_BT_AUDIO          1
 #endif
 #ifndef PROTOBUF_USE_REMOTE_CONTROL
 #define PROTOBUF_USE_REMOTE_CONTROL    1
 #endif
 #ifndef PROTOBUF_USE_LIGHT
-#define PROTOBUF_USE_LIGHT             0
+#define PROTOBUF_USE_LIGHT             1
 #endif
 #ifndef PROTOBUF_USE_MOTOR
 #define PROTOBUF_USE_MOTOR             1
 #endif
 #ifndef PROTOBUF_USE_SOUND_GENERATOR
-#define PROTOBUF_USE_SOUND_GENERATOR   0
+#define PROTOBUF_USE_SOUND_GENERATOR   1
 #endif
 #ifndef PROTOBUF_USE_DISPLAY
-#define PROTOBUF_USE_DISPLAY           0
+#define PROTOBUF_USE_DISPLAY           1
 #endif
 #ifndef PROTOBUF_USE_SYSTEM
 #define PROTOBUF_USE_SYSTEM            1
 #endif
+#endif
+#ifndef PROTOBUF_USE_PERIPHERALS
+#define PROTOBUF_USE_PERIPHERALS       1
 #endif
 
 
@@ -62,7 +66,7 @@ Writing to kisc.pb.h and kisc.pb.c
 #endif
 #if PROTOBUF_USE_SOUND_GENERATOR
 #define MSG_TYPE_SOUND_GENERATOR_MESSAGE 7
-#define MSG_ZYPE_SOUND_GENERATOR_CONTROL_MESSAGE 8
+#define MSG_TYPE_SOUND_GENERATOR_CONTROL_MESSAGE 8
 #endif
 #if PROTOBUF_USE_DISPLAY
 #define MSG_TYPE_DISPLAY_MESSAGE 9
@@ -70,6 +74,10 @@ Writing to kisc.pb.h and kisc.pb.c
 #if PROTOBUF_USE_SYSTEM
 #define MSG_TYPE_SYSTEM_MESSAGE 10
 #endif	
+#if PROTOBUF_USE_PERIPHERALS
+#define MSG_TYPE_PERIPHERALS_MESSAGE 11
+#define MSG_TYPE_PERIPHERALS_FEEDBACK 12
+#endif
 
 #include <Arduino.h>
 
@@ -90,7 +98,6 @@ Writing to kisc.pb.h and kisc.pb.c
 #include <vector>
 #include <string>
 
-#define USE_LOGGER 0
 #if PROTOBUF_USE_BT_AUDIO
 class BluetoothAudioMessageCallbacks;
 class BluetoothAudioControlMessageCallbacks;
@@ -114,6 +121,10 @@ class DisplayMessageCallbacks;
 #endif
 #if PROTOBUF_USE_SYSTEM
 class SystemMessageCallbacks;
+#endif
+#if PROTOBUF_USE_PERIPHERALS
+class PeripheralsMessageCallbacks;
+class PeripheralsFeedbackCallbacks;
 #endif
 
 class KiSCProto {
@@ -171,7 +182,10 @@ class KiSCProto {
 #if PROTOBUF_USE_SYSTEM
       void setSystemMessageCallbacks(SystemMessageCallbacks* pCallbacks);
 #endif
-
+#if PROTOBUF_USE_PERIPHERALS
+    void setPeripheralsMessageCallbacks(PeripheralsMessageCallbacks* pCallbacks);
+    void setPeripheralsFeedbackCallbacks(PeripheralsFeedbackCallbacks* pCallbacks);
+#endif    
 
 #if PROTOBUF_USE_BT_AUDIO
     bool setBluetoothAudioMessageArtist(BluetoothAudioMessage bam, const char *artist);
@@ -223,7 +237,13 @@ class KiSCProto {
 #if PROTOBUF_USE_SYSTEM
       bool sendSystemMessage(SysMessage sm, const uint8_t* mac);
 #endif
-
+#if PROTOBUF_USE_PERIPHERALS
+    bool sendPeripheralsMessage(PeripheralsControlMessage pm);
+    bool sendPeripheralsFeedbackMessage(PeripheralsFeedbackMessage pfm);
+    bool sendPeripheralsMessage(PeripheralsControlMessage pm, const uint8_t* mac);
+    bool sendPeripheralsFeedbackMessage(PeripheralsFeedbackMessage pfm, const uint8_t* mac);
+    
+#endif
 
     /// print all receivers detected in the current session
     void printReceivers();
@@ -266,7 +286,10 @@ class KiSCProto {
 #if PROTOBUF_USE_SYSTEM
       SystemMessageCallbacks* _pSystemMessageCallbacks = nullptr;
 #endif
-
+#if PROTOBUF_USE_PERIPHERALS
+    PeripheralsMessageCallbacks* _pPeripheralsMessageCallbacks = nullptr;
+    PeripheralsFeedbackCallbacks* _pPeripheralsFeedbackCallbacks = nullptr;
+#endif    
     /// current mac target (default: broadcasting)
     uint8_t targetAddress [6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
@@ -296,6 +319,11 @@ class KiSCProto {
 #if PROTOBUF_USE_SYSTEM
       size_t encodeSystemMessage(SysMessage sm);
 #endif
+#if PROTOBUF_USE_PERIPHERALS
+    size_t encodePeripheralsMessage(PeripheralsControlMessage pm);
+    size_t encodePeripheralsFeedbackMessage(PeripheralsFeedbackMessage pfm);
+#endif
+
     void reportError(const char *msg);
 
     bool sendMessage(uint32_t msglen);
@@ -385,6 +413,22 @@ class SystemMessageCallbacks {
     virtual void onError(const char *msg){};
 };
 #endif
+
+#if PROTOBUF_USE_PERIPHERALS
+class PeripheralsMessageCallbacks {
+   public:
+    virtual ~PeripheralsMessageCallbacks(){};
+    virtual void onPeripheralsMessage(PeripheralsControlMessage pm){};
+    virtual void onError(const char *msg){};
+};
+class PeripheralsFeedbackCallbacks {
+   public:
+    virtual ~PeripheralsFeedbackCallbacks(){};
+    virtual void onPeripheralsFeedback(PeripheralsFeedbackMessage pfm){};
+    virtual void onError(const char *msg){};
+};
+#endif
+
 
 extern KiSCProto kiscproto;
 
