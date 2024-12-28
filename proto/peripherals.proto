@@ -1,9 +1,44 @@
 // Motor Messages
-
 syntax = "proto3";
+import  "remotecontrol.proto";
+
+
+message PedalMessage {
+    uint32  pedalPosition = 1;
+}
+
+message RFIDMessage {
+    bool cardpresent = 1;
+    uint32  cardID0 = 2;
+    uint32  cardID1 = 3;
+    uint32  cardID2 = 4;
+}
+
+message RotaryEncoderMessage {
+    uint32  encoderValue = 1;
+    bool    encoderButton = 2;
+}
 
 message PeripheralsFeedbackMessage {
+    PedalMessage    throttle = 1;
+    PedalMessage    brake = 2;
+    int32           steeringAngle = 3;
+    Accelerometer   accelerometer = 4;  // accelerometer
+    Gyroscope       gyroscope = 5;  // gyroscope
+
+    bool            btnStart = 10;
+    bool            btnIndicatorLeft = 11;
+    bool            btnIndicatorRight = 12;
+    bool            btnHorn = 13;
+    bool            btnGearUp = 14;
+    bool            btnGearDown = 15;
+    bool            btnHeadlight = 16;
+    bool            btnHighbeam = 17;
+    
+    optional RFIDMessage rfid = 20;
 }
 
 message PeripheralsControlMessage {
+    bool            steeringActive = 1;
+    int32           steering = 2;
 }

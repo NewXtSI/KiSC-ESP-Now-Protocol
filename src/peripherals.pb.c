@@ -6,6 +6,15 @@
 #error Regenerate this file with the current version of nanopb generator.
 #endif
 
+PB_BIND(PedalMessage, PedalMessage, AUTO)
+
+
+PB_BIND(RFIDMessage, RFIDMessage, AUTO)
+
+
+PB_BIND(RotaryEncoderMessage, RotaryEncoderMessage, AUTO)
+
+
 PB_BIND(PeripheralsFeedbackMessage, PeripheralsFeedbackMessage, AUTO)
 
 
