@@ -10,7 +10,7 @@ Writing to kisc.pb.h and kisc.pb.c
 
 */
 #ifndef PROTOBUF_ALL_MESSAGES
-#define PROTOBUF_ALL_MESSAGES    0
+#define PROTOBUF_ALL_MESSAGES    1
 #endif
 
 #if PROTOBUF_ALL_MESSAGES

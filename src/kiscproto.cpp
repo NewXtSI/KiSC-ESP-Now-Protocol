@@ -20,8 +20,8 @@ RemotecontrolMessage _rcm = RemotecontrolMessage_init_zero;
 LightMessage *_lm = nullptr;
 #endif
 #if PROTOBUF_USE_MOTOR
-MotorboardFeedback _mm = MotorboardFeedback_init_zero;
-MotorboardControl _mcm = MotorboardControl_init_zero;
+MotorboardFeedback *_mm = nullptr;
+MotorboardControl *_mcm = nullptr;
 #endif
 #if PROTOBUF_USE_SYSTEM
 SysMessage *_sm = nullptr;
@@ -31,11 +31,11 @@ SoundGeneratorMessage *_sgm = nullptr;
 SoundGeneratorControlMessage *_sgcm = nullptr;
 #endif
 #if PROTOBUF_USE_DISPLAY
-DisplayMessage _dm = DisplayMessage_init_zero;
+DisplayMessage *_dm = nullptr;
 #endif
 #if PROTOBUF_USE_PERIPHERALS
-PeripheralsControlMessage _pm = PeripheralsControlMessage_init_zero;
-PeripheralsFeedbackMessage _pfm = PeripheralsFeedbackMessage_init_zero;
+PeripheralsControlMessage *_pm = nullptr;
+PeripheralsFeedbackMessage *_pfm = nullptr;
 #endif
 
 /// general buffer for msg sender
@@ -625,12 +625,12 @@ bool SoundGeneratorControlMessageDecodeMessage(uint16_t message_length) {
 #if PROTOBUF_USE_DISPLAY
 bool DisplayMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
-    bool status = pb_decode(&stream, DisplayMessage_fields, &_dm);
+    bool status = pb_decode(&stream, DisplayMessage_fields, _dm);
     if (!status) {
         return false;
     }
     if (kiscproto._pDisplayMessageCallbacks != nullptr) {
-        kiscproto._pDisplayMessageCallbacks->onDisplayMessage(_dm);
+        kiscproto._pDisplayMessageCallbacks->onDisplayMessage(*_dm);
     }
     return true;
 }
@@ -640,23 +640,23 @@ bool DisplayMessageDecodeMessage(uint16_t message_length) {
 #if PROTOBUF_USE_MOTOR
 bool MotorMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
-    bool status = pb_decode(&stream, MotorboardFeedback_fields, &_mm);
+    bool status = pb_decode(&stream, MotorboardFeedback_fields, _mm);
     if (!status) {
         return false;
     }
     if (kiscproto._pMotorMessageCallbacks != nullptr) {
-        kiscproto._pMotorMessageCallbacks->onMotorMessage(_mm);
+        kiscproto._pMotorMessageCallbacks->onMotorMessage(*_mm);
     }
     return true;
 }
 bool MotorControlMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
-    bool status = pb_decode(&stream, MotorboardControl_fields, &_mcm);
+    bool status = pb_decode(&stream, MotorboardControl_fields, _mcm);
     if (!status) {
         return false;
     }
     if (kiscproto._pMotorControlMessageCallbacks != nullptr) {
-        kiscproto._pMotorControlMessageCallbacks->onMotorControlMessage(_mcm);
+        kiscproto._pMotorControlMessageCallbacks->onMotorControlMessage(*_mcm);
     }
     return true;
 }
@@ -677,23 +677,23 @@ bool SystemMessageDecodeMessage(uint16_t message_length) {
 #if PROTOBUF_USE_PERIPHERALS
 bool PeripheralsMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
-    bool status = pb_decode(&stream, PeripheralsControlMessage_fields, &_pm);
+    bool status = pb_decode(&stream, PeripheralsControlMessage_fields, _pm);
     if (!status) {
         return false;
     }
     if (kiscproto._pPeripheralsMessageCallbacks != nullptr) {
-        kiscproto._pPeripheralsMessageCallbacks->onPeripheralsMessage(_pm);
+        kiscproto._pPeripheralsMessageCallbacks->onPeripheralsMessage(*_pm);
     }
     return true;
 }
 bool PeripheralsFeedbackMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
-    bool status = pb_decode(&stream, PeripheralsFeedbackMessage_fields, &_pfm);
+    bool status = pb_decode(&stream, PeripheralsFeedbackMessage_fields, _pfm);
     if (!status) {
         return false;
     }
     if (kiscproto._pPeripheralsFeedbackCallbacks != nullptr) {
-        kiscproto._pPeripheralsFeedbackCallbacks->onPeripheralsFeedback(_pfm);
+        kiscproto._pPeripheralsFeedbackCallbacks->onPeripheralsFeedback(*_pfm);
     }
     return true;
 }
