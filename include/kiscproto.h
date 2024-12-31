@@ -188,9 +188,8 @@ class KiSCProto {
 #endif    
 
 #if PROTOBUF_USE_BT_AUDIO
-    bool setBluetoothAudioMessageArtist(BluetoothAudioMessage bam, const char *artist);
-    bool setBluetoothAudioMessageTitle(BluetoothAudioMessage bam, const char *title);
     bool sendBluetoothAudioMessage(BluetoothAudioMessage bam);
+    bool sendBluetoothAudioMessage(BluetoothAudioMessage bam, char *artist, char *title, char *album);
     bool sendBluetoothAudioControlMessage(BluetoothAudioControlMessage bacm);
 #endif
 #if PROTOBUF_USE_REMOTE_CONTROL    
@@ -296,6 +295,7 @@ class KiSCProto {
     bool init();        
  private:
 #if PROTOBUF_USE_BT_AUDIO 
+    size_t encodeBluetoothAudioMessage(BluetoothAudioMessage bam, char *artist, char *title, char *album);
     size_t encodeBluetoothAudioMessage(BluetoothAudioMessage bam);
     size_t encodeBluetoothAudioControlMessage(BluetoothAudioControlMessage bacm);
 #endif

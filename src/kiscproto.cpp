@@ -209,6 +209,11 @@ void printBuffer(uint8_t *buffer, uint32_t length) {
 //    Serial.println();
 }
 #if PROTOBUF_USE_BT_AUDIO
+bool KiSCProto::sendBluetoothAudioMessage(BluetoothAudioMessage bam, char *artist, char *title, char *album) {
+    DBGLOG(Verbose, "Sending Bluetooth Audio Message");
+    return sendMessage(encodeBluetoothAudioMessage(bam, artist, title, album));
+}
+
 bool KiSCProto::sendBluetoothAudioMessage(BluetoothAudioMessage bam) {
     DBGLOG(Verbose, "Sending Bluetooth Audio Message");
     return sendMessage(encodeBluetoothAudioMessage(bam));
@@ -275,30 +280,37 @@ bool encode_string(pb_ostream_t* stream, const pb_field_t* field, void* const* a
 {
     // ...and you always cast to the same pointer type, reducing
     // the chance of mistakes
-    callback_context_t * ctx = (callback_context_t *)(*arg);
+    char * str = (char *)(*arg);
 
     if (!pb_encode_tag_for_field(stream, field))
         return false;
-
-    return pb_encode_string(stream, (uint8_t*)ctx->text, strlen(ctx->text));
+    return pb_encode_string(stream, (uint8_t*)str, strlen(str));
 }
 
-bool 
-KiSCProto::setBluetoothAudioMessageArtist(BluetoothAudioMessage bam, const char *artist) {
-    callback_context_t ctx;    
-    strncpy(ctx.text, artist, 32);
-    bam.bta.arg = &ctx;
+size_t KiSCProto::encodeBluetoothAudioMessage(BluetoothAudioMessage bam, char *artist, char *title, char *album) {
+    DBGLOG(Verbose, "Encoding Bluetooth Audio Message");
+    char buffer1[32];
+    char buffer2[32];
+    char buffer3[32];
+    strncpy(buffer1, artist, 32);
+    strncpy(buffer2, title, 32);
+    strncpy(buffer3, album, 32);
+    pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
     bam.bta.funcs.encode = &encode_string;
-    return true;
-}
-
-bool 
-KiSCProto::setBluetoothAudioMessageTitle(BluetoothAudioMessage bam, const char *title) {
-    callback_context_t ctx;    
-    strncpy(ctx.text, title, 32);
-    bam.bts.arg = &ctx;
     bam.bts.funcs.encode = &encode_string;
-    return true;
+    bam.bta.arg = buffer1;
+    bam.bts.arg = buffer2;
+    bool status = pb_encode(&stream, BluetoothAudioMessage_fields, &bam);
+    send_buffer[0] = MSG_TYPE_BLUETOOTH_AUDIO_MESSAGE;
+    #ifndef ARDUINO_ARCH_ESP32
+    delay(5); // ESP8266 needs it or die
+    #endif
+    size_t message_length = stream.bytes_written;
+    if (!status) {
+        DBGLOG(Error, "Encoding failed: %s", PB_GET_ERROR(&stream));
+        return 0;
+    }
+    return message_length+1;
 }
 
 size_t KiSCProto::encodeBluetoothAudioMessage(BluetoothAudioMessage bam) {
@@ -312,7 +324,6 @@ size_t KiSCProto::encodeBluetoothAudioMessage(BluetoothAudioMessage bam) {
     size_t message_length = stream.bytes_written;
     if (!status) {
         DBGLOG(Error, "Encoding failed: %s", PB_GET_ERROR(&stream));
-//        if(devmode) printf("Encoding failed: %s\r\n", PB_GET_ERROR(&stream));
         return 0;
     }
     return message_length+1;
