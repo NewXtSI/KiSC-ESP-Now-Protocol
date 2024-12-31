@@ -7,6 +7,7 @@
 
 #include "esp_wifi.h"
 
+
 #if PROTOBUF_USE_BT_AUDIO
 //BluetoothAudioMessage _bam = BluetoothAudioMessage_init_zero;
 //BluetoothAudioControlMessage _bacm = BluetoothAudioControlMessage_init_zero;
@@ -193,6 +194,7 @@ void printMacAddress(const uint8_t * macAddress){
 }
 
 void printBuffer(uint8_t *buffer, uint32_t length) {
+#if 0    
     char outstr[255];
     memset(outstr, 0, 255);    
     for (uint32_t i = 0; i < length; i++) {
@@ -206,6 +208,7 @@ void printBuffer(uint8_t *buffer, uint32_t length) {
 #else
     ESP_LOGI("ESPNow", "Buffer: %s", outstr);
 #endif
+#endif    
 //    Serial.println();
 }
 #if PROTOBUF_USE_BT_AUDIO
@@ -281,6 +284,7 @@ bool encode_string(pb_ostream_t* stream, const pb_field_t* field, void* const* a
     // ...and you always cast to the same pointer type, reducing
     // the chance of mistakes
     char * str = (char *)(*arg);
+    DBGLOG(Warning, "Encoding string: %s", str);
 
     if (!pb_encode_tag_for_field(stream, field))
         return false;
@@ -289,17 +293,20 @@ bool encode_string(pb_ostream_t* stream, const pb_field_t* field, void* const* a
 
 size_t KiSCProto::encodeBluetoothAudioMessage(BluetoothAudioMessage bam, char *artist, char *title, char *album) {
     DBGLOG(Verbose, "Encoding Bluetooth Audio Message");
-    char buffer1[32];
-    char buffer2[32];
-    char buffer3[32];
-    strncpy(buffer1, artist, 32);
-    strncpy(buffer2, title, 32);
-    strncpy(buffer3, album, 32);
+    char buffer1[ESPNOW_MAX_STR];
+    char buffer2[ESPNOW_MAX_STR];
+    char buffer3[ESPNOW_MAX_STR];
+    memset(buffer1, 0, ESPNOW_MAX_STR);
+    memset(buffer2, 0, ESPNOW_MAX_STR);
+    memset(buffer3, 0, ESPNOW_MAX_STR);
+    strncpy(buffer1, artist, sizeof(buffer1)-1);
+    strncpy(buffer2, title, sizeof(buffer2)-1);
+    strncpy(buffer3, album, sizeof(buffer3)-1);
     pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
     bam.bta.funcs.encode = &encode_string;
     bam.bts.funcs.encode = &encode_string;
-    bam.bta.arg = buffer1;
-    bam.bts.arg = buffer2;
+    bam.bta.arg = &buffer1;
+    bam.bts.arg = &buffer2;
     bool status = pb_encode(&stream, BluetoothAudioMessage_fields, &bam);
     send_buffer[0] = MSG_TYPE_BLUETOOTH_AUDIO_MESSAGE;
     #ifndef ARDUINO_ARCH_ESP32
@@ -508,7 +515,7 @@ size_t KiSCProto::encodePeripheralsFeedbackMessage(PeripheralsFeedbackMessage pf
 
 bool decode_string(pb_istream_t *stream, const pb_field_t *field, void **arg)
 {
-    uint8_t buffer[32] = {0};
+    uint8_t buffer[ESPNOW_MAX_STR] = {0};
     
     /* We could read block-by-block to avoid the large buffer... */
     if (stream->bytes_left > sizeof(buffer) - 1)
@@ -528,23 +535,29 @@ bool decode_string(pb_istream_t *stream, const pb_field_t *field, void **arg)
 #if PROTOBUF_USE_BT_AUDIO
 bool BluetoothAudioMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
-    char *buffer1 = (char *)malloc(32);
-    char *buffer2 = (char *)malloc(32);
-    char *buffer3 = (char *)malloc(32);
+    char *buffer1 = (char *)malloc(ESPNOW_MAX_STR);
+    char *buffer2 = (char *)malloc(ESPNOW_MAX_STR);
+    char *buffer3 = (char *)malloc(ESPNOW_MAX_STR);
 
     _bam->bta.funcs.decode = &decode_string;
     _bam->bts.funcs.decode = &decode_string;
-    _bam->bta.arg = buffer1;
-    _bam->bts.arg = buffer2;
+    _bam->bta.arg = &buffer1;
+    _bam->bts.arg = &buffer2;
     bool status = pb_decode(&stream, BluetoothAudioMessage_fields, _bam);
     if (!status) {
         DBGLOG(Error, "Decoding bluetooth audio msg failed: %s", PB_GET_ERROR(&stream));
 //        if(joystick.devmode) printf("Decoding bluetooth audio msg failed: %s\r\n", PB_GET_ERROR(&stream));
+        free(buffer1);
+        free(buffer2);
+        free(buffer3);
         return false;
     }
     if (kiscproto._pBluetoothAudioMessageCallbacks != nullptr) {
         kiscproto._pBluetoothAudioMessageCallbacks->onBluetoothAudioMessage(*_bam, buffer1, buffer2, buffer3);
     }
+    free(buffer1);
+    free(buffer2);
+    free(buffer3);
     return true;
 }
 

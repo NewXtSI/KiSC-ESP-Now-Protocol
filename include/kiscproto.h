@@ -2,6 +2,9 @@
 #define INCLUDE_KISCPROTO_INCLUDED
 
 #define USE_LOGGER 1
+
+#define ESPNOW_MAX_STR 48
+
 /*
 henni@Desktop MINGW64 /d/Development/KiSC/KiSC-Dashboard/KiSC-ESP-Now-Protocol/src (ProtoBuf)
 $ python3 ../../.pio/libdeps/esp32dev/Nanopb/generator/nanopb_generator.py kisc.proto 
