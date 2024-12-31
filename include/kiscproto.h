@@ -340,7 +340,7 @@ undefined reference to `BluetoothAudioMessageCallbacks::onBluetoothAudioMessage(
 class BluetoothAudioMessageCallbacks {
    public:
     virtual ~BluetoothAudioMessageCallbacks(){};
-    virtual void onBluetoothAudioMessage(BluetoothAudioMessage bam){};
+    virtual void onBluetoothAudioMessage(BluetoothAudioMessage bam, char *artist, char *title, char *album){};
     virtual void onError(const char *msg){};
 };
 

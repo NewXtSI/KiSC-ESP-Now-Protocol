@@ -506,9 +506,36 @@ size_t KiSCProto::encodePeripheralsFeedbackMessage(PeripheralsFeedbackMessage pf
 }
 #endif
 
+bool decode_string(pb_istream_t *stream, const pb_field_t *field, void **arg)
+{
+    uint8_t buffer[32] = {0};
+    
+    /* We could read block-by-block to avoid the large buffer... */
+    if (stream->bytes_left > sizeof(buffer) - 1)
+        return false;
+    
+    if (!pb_read(stream, buffer, stream->bytes_left))
+        return false;
+    
+    /* Print the string, in format comparable with protoc --decode.
+     * Format comes from the arg defined in main().
+     */
+    sprintf((char*)*arg, "%s", buffer);
+    return true;
+}
+
+
 #if PROTOBUF_USE_BT_AUDIO
 bool BluetoothAudioMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
+    char *buffer1 = (char *)malloc(32);
+    char *buffer2 = (char *)malloc(32);
+    char *buffer3 = (char *)malloc(32);
+
+    _bam->bta.funcs.decode = &decode_string;
+    _bam->bts.funcs.decode = &decode_string;
+    _bam->bta.arg = buffer1;
+    _bam->bts.arg = buffer2;
     bool status = pb_decode(&stream, BluetoothAudioMessage_fields, _bam);
     if (!status) {
         DBGLOG(Error, "Decoding bluetooth audio msg failed: %s", PB_GET_ERROR(&stream));
@@ -516,7 +543,7 @@ bool BluetoothAudioMessageDecodeMessage(uint16_t message_length) {
         return false;
     }
     if (kiscproto._pBluetoothAudioMessageCallbacks != nullptr) {
-        kiscproto._pBluetoothAudioMessageCallbacks->onBluetoothAudioMessage(*_bam);
+        kiscproto._pBluetoothAudioMessageCallbacks->onBluetoothAudioMessage(*_bam, buffer1, buffer2, buffer3);
     }
     return true;
 }
