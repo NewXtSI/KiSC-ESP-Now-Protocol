@@ -10,6 +10,12 @@
 #endif
 
 /* Struct definitions */
+typedef struct _ConnectedPeer {
+    pb_callback_t devicename;
+    pb_callback_t macaddr;
+    bool asksforconnection;
+} ConnectedPeer;
+
 typedef struct _BluetoothAudioMessage {
     bool btc; /* bluetooth connection status */
     bool btp; /* bluetooth play status */
@@ -18,6 +24,10 @@ typedef struct _BluetoothAudioMessage {
     uint32_t btd; /* bluetooth duration */
     uint32_t btpos; /* bluetooth position */
     float btsv; /* bluetooth volume */
+    uint32_t playstatus;
+    bool has_connectedpeer;
+    ConnectedPeer connectedpeer;
+    pb_callback_t btalbum; /* bluetooth album */
     uint32_t ck; /* check data */
 } BluetoothAudioMessage;
 
@@ -29,6 +39,14 @@ typedef struct _BluetoothAudioControlMessage {
     float btsv; /* volume value */
     bool btsm; /* mute */
     bool btpair; /* pair */
+    bool btdisconnect;
+    bool fastforward;
+    bool rewind;
+    bool discoverable;
+    bool pincodeactive;
+    bool confirmconnection;
+    bool rejectconnection;
+    uint32_t pincode;
     uint32_t ck; /* check data */
 } BluetoothAudioControlMessage;
 
@@ -38,12 +56,17 @@ extern "C" {
 #endif
 
 /* Initializer values for message structs */
-#define BluetoothAudioMessage_init_default       {0, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
-#define BluetoothAudioControlMessage_init_default {0, 0, 0, 0, 0, 0, 0, 0}
-#define BluetoothAudioMessage_init_zero          {0, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0}
-#define BluetoothAudioControlMessage_init_zero   {0, 0, 0, 0, 0, 0, 0, 0}
+#define ConnectedPeer_init_default               {{{NULL}, NULL}, {{NULL}, NULL}, 0}
+#define BluetoothAudioMessage_init_default       {0, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, false, ConnectedPeer_init_default, {{NULL}, NULL}, 0}
+#define BluetoothAudioControlMessage_init_default {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define ConnectedPeer_init_zero                  {{{NULL}, NULL}, {{NULL}, NULL}, 0}
+#define BluetoothAudioMessage_init_zero          {0, 0, {{NULL}, NULL}, {{NULL}, NULL}, 0, 0, 0, 0, false, ConnectedPeer_init_zero, {{NULL}, NULL}, 0}
+#define BluetoothAudioControlMessage_init_zero   {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
+#define ConnectedPeer_devicename_tag             1
+#define ConnectedPeer_macaddr_tag                2
+#define ConnectedPeer_asksforconnection_tag      3
 #define BluetoothAudioMessage_btc_tag            1
 #define BluetoothAudioMessage_btp_tag            2
 #define BluetoothAudioMessage_bts_tag            3
@@ -51,6 +74,9 @@ extern "C" {
 #define BluetoothAudioMessage_btd_tag            5
 #define BluetoothAudioMessage_btpos_tag          6
 #define BluetoothAudioMessage_btsv_tag           7
+#define BluetoothAudioMessage_playstatus_tag     8
+#define BluetoothAudioMessage_connectedpeer_tag  9
+#define BluetoothAudioMessage_btalbum_tag        10
 #define BluetoothAudioMessage_ck_tag             100
 #define BluetoothAudioControlMessage_btp_tag     1
 #define BluetoothAudioControlMessage_btpa_tag    2
@@ -59,9 +85,24 @@ extern "C" {
 #define BluetoothAudioControlMessage_btsv_tag    6
 #define BluetoothAudioControlMessage_btsm_tag    7
 #define BluetoothAudioControlMessage_btpair_tag  8
+#define BluetoothAudioControlMessage_btdisconnect_tag 9
+#define BluetoothAudioControlMessage_fastforward_tag 10
+#define BluetoothAudioControlMessage_rewind_tag  11
+#define BluetoothAudioControlMessage_discoverable_tag 12
+#define BluetoothAudioControlMessage_pincodeactive_tag 13
+#define BluetoothAudioControlMessage_confirmconnection_tag 14
+#define BluetoothAudioControlMessage_rejectconnection_tag 15
+#define BluetoothAudioControlMessage_pincode_tag 16
 #define BluetoothAudioControlMessage_ck_tag      100
 
 /* Struct field encoding specification for nanopb */
+#define ConnectedPeer_FIELDLIST(X, a) \
+X(a, CALLBACK, SINGULAR, STRING,   devicename,        1) \
+X(a, CALLBACK, SINGULAR, STRING,   macaddr,           2) \
+X(a, STATIC,   SINGULAR, BOOL,     asksforconnection,   3)
+#define ConnectedPeer_CALLBACK pb_default_field_callback
+#define ConnectedPeer_DEFAULT NULL
+
 #define BluetoothAudioMessage_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     btc,               1) \
 X(a, STATIC,   SINGULAR, BOOL,     btp,               2) \
@@ -70,9 +111,13 @@ X(a, CALLBACK, SINGULAR, STRING,   bta,               4) \
 X(a, STATIC,   SINGULAR, UINT32,   btd,               5) \
 X(a, STATIC,   SINGULAR, UINT32,   btpos,             6) \
 X(a, STATIC,   SINGULAR, FLOAT,    btsv,              7) \
+X(a, STATIC,   SINGULAR, UINT32,   playstatus,        8) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  connectedpeer,     9) \
+X(a, CALLBACK, SINGULAR, STRING,   btalbum,          10) \
 X(a, STATIC,   SINGULAR, UINT32,   ck,              100)
 #define BluetoothAudioMessage_CALLBACK pb_default_field_callback
 #define BluetoothAudioMessage_DEFAULT NULL
+#define BluetoothAudioMessage_connectedpeer_MSGTYPE ConnectedPeer
 
 #define BluetoothAudioControlMessage_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     btp,               1) \
@@ -82,21 +127,32 @@ X(a, STATIC,   SINGULAR, BOOL,     btpb,              4) \
 X(a, STATIC,   SINGULAR, FLOAT,    btsv,              6) \
 X(a, STATIC,   SINGULAR, BOOL,     btsm,              7) \
 X(a, STATIC,   SINGULAR, BOOL,     btpair,            8) \
+X(a, STATIC,   SINGULAR, BOOL,     btdisconnect,      9) \
+X(a, STATIC,   SINGULAR, BOOL,     fastforward,      10) \
+X(a, STATIC,   SINGULAR, BOOL,     rewind,           11) \
+X(a, STATIC,   SINGULAR, BOOL,     discoverable,     12) \
+X(a, STATIC,   SINGULAR, BOOL,     pincodeactive,    13) \
+X(a, STATIC,   SINGULAR, BOOL,     confirmconnection,  14) \
+X(a, STATIC,   SINGULAR, BOOL,     rejectconnection,  15) \
+X(a, STATIC,   SINGULAR, UINT32,   pincode,          16) \
 X(a, STATIC,   SINGULAR, UINT32,   ck,              100)
 #define BluetoothAudioControlMessage_CALLBACK NULL
 #define BluetoothAudioControlMessage_DEFAULT NULL
 
+extern const pb_msgdesc_t ConnectedPeer_msg;
 extern const pb_msgdesc_t BluetoothAudioMessage_msg;
 extern const pb_msgdesc_t BluetoothAudioControlMessage_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
+#define ConnectedPeer_fields &ConnectedPeer_msg
 #define BluetoothAudioMessage_fields &BluetoothAudioMessage_msg
 #define BluetoothAudioControlMessage_fields &BluetoothAudioControlMessage_msg
 
 /* Maximum encoded size of messages (where known) */
+/* ConnectedPeer_size depends on runtime parameters */
 /* BluetoothAudioMessage_size depends on runtime parameters */
 #define BTAUDIO_PB_H_MAX_SIZE                    BluetoothAudioControlMessage_size
-#define BluetoothAudioControlMessage_size        24
+#define BluetoothAudioControlMessage_size        45
 
 #ifdef __cplusplus
 } /* extern "C" */

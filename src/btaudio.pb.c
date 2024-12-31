@@ -6,6 +6,9 @@
 #error Regenerate this file with the current version of nanopb generator.
 #endif
 
+PB_BIND(ConnectedPeer, ConnectedPeer, AUTO)
+
+
 PB_BIND(BluetoothAudioMessage, BluetoothAudioMessage, 2)
 
 

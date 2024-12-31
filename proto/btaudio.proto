@@ -17,6 +17,7 @@ message BluetoothAudioMessage {
     float           btsv = 7;  // bluetooth volume
     uint32          playstatus = 8;
     optional        ConnectedPeer connectedpeer = 9;
+    string          btalbum = 10;  // bluetooth album
     uint32          ck = 100; // check data
 }
 

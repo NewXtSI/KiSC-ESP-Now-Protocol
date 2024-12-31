@@ -305,8 +305,10 @@ size_t KiSCProto::encodeBluetoothAudioMessage(BluetoothAudioMessage bam, char *a
     pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
     bam.bta.funcs.encode = &encode_string;
     bam.bts.funcs.encode = &encode_string;
+    bam.btalbum.funcs.encode = &encode_string;
     bam.bta.arg = &buffer1;
     bam.bts.arg = &buffer2;
+    bam.btalbum.arg = &buffer3;
     bool status = pb_encode(&stream, BluetoothAudioMessage_fields, &bam);
     send_buffer[0] = MSG_TYPE_BLUETOOTH_AUDIO_MESSAGE;
     #ifndef ARDUINO_ARCH_ESP32
@@ -538,11 +540,19 @@ bool BluetoothAudioMessageDecodeMessage(uint16_t message_length) {
     char *buffer1 = (char *)malloc(ESPNOW_MAX_STR);
     char *buffer2 = (char *)malloc(ESPNOW_MAX_STR);
     char *buffer3 = (char *)malloc(ESPNOW_MAX_STR);
+    char *buffer4 = (char *)malloc(ESPNOW_MAX_STR);
+    char *buffer5 = (char *)malloc(ESPNOW_MAX_STR);
 
     _bam->bta.funcs.decode = &decode_string;
     _bam->bts.funcs.decode = &decode_string;
+    _bam->btalbum.funcs.decode = &decode_string;
     _bam->bta.arg = buffer1;
     _bam->bts.arg = buffer2;
+    _bam->btalbum.arg = buffer3;
+    _bam->connectedpeer.devicename.funcs.decode = &decode_string;
+    _bam->connectedpeer.devicename.arg = buffer4;
+    _bam->connectedpeer.macaddr.funcs.decode = &decode_string;
+    _bam->connectedpeer.macaddr.arg = buffer5;
     bool status = pb_decode(&stream, BluetoothAudioMessage_fields, _bam);
     if (!status) {
         DBGLOG(Error, "Decoding bluetooth audio msg failed: %s", PB_GET_ERROR(&stream));
@@ -550,6 +560,8 @@ bool BluetoothAudioMessageDecodeMessage(uint16_t message_length) {
         free(buffer1);
         free(buffer2);
         free(buffer3);
+        free(buffer4);
+        free(buffer5);
         return false;
     }
     if (kiscproto._pBluetoothAudioMessageCallbacks != nullptr) {
@@ -558,6 +570,8 @@ bool BluetoothAudioMessageDecodeMessage(uint16_t message_length) {
     free(buffer1);
     free(buffer2);
     free(buffer3);
+    free(buffer4);
+    free(buffer5);
     return true;
 }
 
