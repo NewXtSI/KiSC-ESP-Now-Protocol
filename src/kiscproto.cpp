@@ -541,8 +541,8 @@ bool BluetoothAudioMessageDecodeMessage(uint16_t message_length) {
 
     _bam->bta.funcs.decode = &decode_string;
     _bam->bts.funcs.decode = &decode_string;
-    _bam->bta.arg = &buffer1;
-    _bam->bts.arg = &buffer2;
+    _bam->bta.arg = buffer1;
+    _bam->bts.arg = buffer2;
     bool status = pb_decode(&stream, BluetoothAudioMessage_fields, _bam);
     if (!status) {
         DBGLOG(Error, "Decoding bluetooth audio msg failed: %s", PB_GET_ERROR(&stream));
