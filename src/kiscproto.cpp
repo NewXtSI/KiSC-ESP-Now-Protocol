@@ -194,6 +194,7 @@ void printMacAddress(const uint8_t * macAddress){
 }
 
 void printBuffer(uint8_t *buffer, uint32_t length) {
+#if 0    
     char outstr[255];
     memset(outstr, 0, 255);    
     for (uint32_t i = 0; i < length; i++) {
@@ -207,6 +208,7 @@ void printBuffer(uint8_t *buffer, uint32_t length) {
 #else
     ESP_LOGI("ESPNow", "Buffer: %s", outstr);
 #endif
+#endif    
 //    Serial.println();
 }
 #if PROTOBUF_USE_BT_AUDIO
