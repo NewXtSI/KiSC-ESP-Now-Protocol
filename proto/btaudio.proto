@@ -1,6 +1,12 @@
 // Btaudio
 syntax = "proto3";
 
+message ConnectedPeer {
+    string          devicename = 1;
+    string          macaddr = 2;
+    bool            asksforconnection = 3;
+}
+
 message BluetoothAudioMessage {
     bool            btc = 1;  // bluetooth connection status
     bool            btp = 2;  // bluetooth play status
@@ -9,6 +15,8 @@ message BluetoothAudioMessage {
     uint32          btd = 5;  // bluetooth duration
     uint32          btpos = 6;  // bluetooth position
     float           btsv = 7;  // bluetooth volume
+    uint32          playstatus = 8;
+    optional        ConnectedPeer connectedpeer = 9;
     uint32          ck = 100; // check data
 }
 
@@ -20,6 +28,15 @@ message BluetoothAudioControlMessage {
     float           btsv = 6;  // volume value
     bool            btsm = 7;  // mute
     bool            btpair = 8;  // pair
+    bool            btdisconnect = 9;
+    bool            fastforward = 10;
+    bool            rewind = 11;
+    bool            discoverable = 12;
+    bool            pincodeactive = 13;
+    bool            confirmconnection = 14;
+    bool            rejectconnection = 15;
+    uint32          pincode = 16;
+
 
     uint32          ck = 100; // check data
 }

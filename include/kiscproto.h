@@ -33,20 +33,20 @@ Writing to kisc.pb.h and kisc.pb.c
 #define PROTOBUF_USE_LIGHT             1
 #endif
 #ifndef PROTOBUF_USE_MOTOR
-#define PROTOBUF_USE_MOTOR             1
+#define PROTOBUF_USE_MOTOR             0
 #endif
 #ifndef PROTOBUF_USE_SOUND_GENERATOR
 #define PROTOBUF_USE_SOUND_GENERATOR   1
 #endif
 #ifndef PROTOBUF_USE_DISPLAY
-#define PROTOBUF_USE_DISPLAY           1
+#define PROTOBUF_USE_DISPLAY           0
 #endif
 #ifndef PROTOBUF_USE_SYSTEM
 #define PROTOBUF_USE_SYSTEM            1
 #endif
 #endif
 #ifndef PROTOBUF_USE_PERIPHERALS
-#define PROTOBUF_USE_PERIPHERALS       1
+#define PROTOBUF_USE_PERIPHERALS       0
 #endif
 
 

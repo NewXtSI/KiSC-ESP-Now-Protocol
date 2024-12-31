@@ -5,26 +5,30 @@
 #include <ESP32Logger.h>
 #endif
 
+#include "esp_wifi.h"
+
 #if PROTOBUF_USE_BT_AUDIO
-BluetoothAudioMessage _bam = BluetoothAudioMessage_init_zero;
-BluetoothAudioControlMessage _bacm = BluetoothAudioControlMessage_init_zero;
+//BluetoothAudioMessage _bam = BluetoothAudioMessage_init_zero;
+//BluetoothAudioControlMessage _bacm = BluetoothAudioControlMessage_init_zero;
+BluetoothAudioMessage *_bam = nullptr;
+BluetoothAudioControlMessage *_bacm = nullptr;
 #endif
 #if PROTOBUF_USE_REMOTE_CONTROL
 RemotecontrolMessage _rcm = RemotecontrolMessage_init_zero;
 #endif
 #if PROTOBUF_USE_LIGHT
-LightMessage _lm = LightMessage_init_zero;
+LightMessage *_lm = nullptr;
 #endif
 #if PROTOBUF_USE_MOTOR
 MotorboardFeedback _mm = MotorboardFeedback_init_zero;
 MotorboardControl _mcm = MotorboardControl_init_zero;
 #endif
 #if PROTOBUF_USE_SYSTEM
-SysMessage _sm = SysMessage_init_zero;
+SysMessage *_sm = nullptr;
 #endif
 #if PROTOBUF_USE_SOUND_GENERATOR
-SoundGeneratorMessage _sgm = SoundGeneratorMessage_init_zero;
-SoundGeneratorControlMessage _sgcm = SoundGeneratorControlMessage_init_zero;
+SoundGeneratorMessage *_sgm = nullptr;
+SoundGeneratorControlMessage *_sgcm = nullptr;
 #endif
 #if PROTOBUF_USE_DISPLAY
 DisplayMessage _dm = DisplayMessage_init_zero;
@@ -33,7 +37,6 @@ DisplayMessage _dm = DisplayMessage_init_zero;
 PeripheralsControlMessage _pm = PeripheralsControlMessage_init_zero;
 PeripheralsFeedbackMessage _pfm = PeripheralsFeedbackMessage_init_zero;
 #endif
-
 
 /// general buffer for msg sender
 uint8_t send_buffer[256];
@@ -495,27 +498,27 @@ size_t KiSCProto::encodePeripheralsFeedbackMessage(PeripheralsFeedbackMessage pf
 #if PROTOBUF_USE_BT_AUDIO
 bool BluetoothAudioMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
-    bool status = pb_decode(&stream, BluetoothAudioMessage_fields, &_bam);
+    bool status = pb_decode(&stream, BluetoothAudioMessage_fields, _bam);
     if (!status) {
         DBGLOG(Error, "Decoding bluetooth audio msg failed: %s", PB_GET_ERROR(&stream));
 //        if(joystick.devmode) printf("Decoding bluetooth audio msg failed: %s\r\n", PB_GET_ERROR(&stream));
         return false;
     }
     if (kiscproto._pBluetoothAudioMessageCallbacks != nullptr) {
-        kiscproto._pBluetoothAudioMessageCallbacks->onBluetoothAudioMessage(_bam);
+        kiscproto._pBluetoothAudioMessageCallbacks->onBluetoothAudioMessage(*_bam);
     }
     return true;
 }
 
 bool BluetoothAudioControlMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
-    bool status = pb_decode(&stream, BluetoothAudioControlMessage_fields, &_bacm);
+    bool status = pb_decode(&stream, BluetoothAudioControlMessage_fields, _bacm);
     if (!status) {
 //        if(joystick.devmode) printf("Decoding bluetooth audio control msg failed: %s\r\n", PB_GET_ERROR(&stream));
         return false;
     }
     if (kiscproto._pBluetoothAudioControlMessageCallbacks != nullptr) {
-        kiscproto._pBluetoothAudioControlMessageCallbacks->onBluetoothAudioControlMessage(_bacm);
+        kiscproto._pBluetoothAudioControlMessageCallbacks->onBluetoothAudioControlMessage(*_bacm);
     }
     return true;
 }
@@ -545,13 +548,13 @@ bool RemotecontrolMessageDecodeMessage(uint16_t message_length) {
 #if PROTOBUF_USE_LIGHT
 bool LightMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
-    bool status = pb_decode(&stream, LightMessage_fields, &_lm);
+    bool status = pb_decode(&stream, LightMessage_fields, _lm);
     if (!status) {
 //        if(joystick.devmode) printf("Decoding light msg failed: %s\r\n", PB_GET_ERROR(&stream));
         return false;
     }
     if (kiscproto._pLightMessageCallbacks != nullptr) {
-        kiscproto._pLightMessageCallbacks->onLightMessage(_lm);
+        kiscproto._pLightMessageCallbacks->onLightMessage(*_lm);
     }
     return true;
 }
@@ -560,23 +563,23 @@ bool LightMessageDecodeMessage(uint16_t message_length) {
 #if PROTOBUF_USE_SOUND_GENERATOR
 bool SoundGeneratorMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
-    bool status = pb_decode(&stream, SoundGeneratorMessage_fields, &_sgm);
+    bool status = pb_decode(&stream, SoundGeneratorMessage_fields, _sgm);
     if (!status) {
         return false;
     }
     if (kiscproto._pSoundGeneratorMessageCallbacks != nullptr) {
-        kiscproto._pSoundGeneratorMessageCallbacks->onSoundGeneratorMessage(_sgm);
+        kiscproto._pSoundGeneratorMessageCallbacks->onSoundGeneratorMessage(*_sgm);
     }
     return true;
 }
 bool SoundGeneratorControlMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
-    bool status = pb_decode(&stream, SoundGeneratorControlMessage_fields, &_sgcm);
+    bool status = pb_decode(&stream, SoundGeneratorControlMessage_fields, _sgcm);
     if (!status) {
         return false;
     }
     if (kiscproto._pSoundGeneratorControlMessageCallbacks != nullptr) {
-        kiscproto._pSoundGeneratorControlMessageCallbacks->onSoundGeneratorControlMessage(_sgcm);
+        kiscproto._pSoundGeneratorControlMessageCallbacks->onSoundGeneratorControlMessage(*_sgcm);
     }
     return true;
 }
@@ -623,12 +626,12 @@ bool MotorControlMessageDecodeMessage(uint16_t message_length) {
 #if PROTOBUF_USE_SYSTEM
 bool SystemMessageDecodeMessage(uint16_t message_length) {
     pb_istream_t stream = pb_istream_from_buffer(recv_buffer, message_length);
-    bool status = pb_decode(&stream, SysMessage_fields, &_sm);
+    bool status = pb_decode(&stream, SysMessage_fields, _sm);
     if (!status) {
         return false;
     }
     if (kiscproto._pSystemMessageCallbacks != nullptr) {
-        kiscproto._pSystemMessageCallbacks->onSystemMessage(_sm);
+        kiscproto._pSystemMessageCallbacks->onSystemMessage(*_sm);
     }
     return true;
 }
@@ -1051,10 +1054,39 @@ bool KiSCProto::sendMessage(uint32_t msglen) {
     return sendMessage(msglen, targetAddress);    
 }
 
+#define ESPNOW_WIFI_MODE WIFI_MODE_STA
+#define ESPNOW_WIFI_IF   ESP_IF_WIFI_STA
+#define ESPNOW_WIFI_CHANNEL 1
+/* WiFi should start before using ESPNOW */
+static void example_wifi_init(void)
+{
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    cfg.static_rx_buf_num = 2; // War 8
+    cfg.dynamic_rx_buf_num = 4; // War 32
+    cfg.static_tx_buf_num = 2; // War 8
+
+    ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
+    ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_FLASH) );
+    ESP_ERROR_CHECK( esp_wifi_set_mode(ESPNOW_WIFI_MODE) );
+    ESP_ERROR_CHECK( esp_wifi_start());
+    ESP_ERROR_CHECK( esp_wifi_set_channel(ESPNOW_WIFI_CHANNEL, WIFI_SECOND_CHAN_NONE));
+
+#if CONFIG_ESPNOW_ENABLE_LONG_RANGE
+    ESP_ERROR_CHECK( esp_wifi_set_protocol(ESPNOW_WIFI_IF, WIFI_PROTOCOL_11B|WIFI_PROTOCOL_11G|WIFI_PROTOCOL_11N|WIFI_PROTOCOL_LR) );
+#endif
+}
 
 bool 
 KiSCProto::init() {
-    WiFi.mode(WIFI_STA);
+
+    /*
+    BluetoothAudioMessage *_bam = nullptr;
+BluetoothAudioControlMessage *_bacm = nullptr;
+
+*/
+/*    WiFi.mode(WIFI_STA);
     // startup ESP Now
 #if USE_LOGGER
     DBGLOG(Info, "ESPNow Init");
@@ -1062,10 +1094,79 @@ KiSCProto::init() {
 #else
     ESP_LOGI("ESPNow", "ESPNow Init");
     ESP_LOGI("ESPNow", "ESPNow MAC: %s", WiFi.macAddress().c_str());    
-#endif    
+#endif    */
     // shutdown wifi
-    WiFi.disconnect();
-    delay(100);
+    DBGLOG(Info, "Initializing global variables");
+
+#ifdef BOARD_HAS_PSRAM
+    if (psramFound()) {
+#if PROTOBUF_USE_BT_AUDIO
+        _bam = (BluetoothAudioMessage *)ps_malloc(sizeof(BluetoothAudioMessage));
+        _bacm = (BluetoothAudioControlMessage *)ps_malloc(sizeof(BluetoothAudioControlMessage));
+#endif        
+#if PROTOBUF_USE_SYSTEM
+        _sm = (SysMessage *)ps_malloc(sizeof(SysMessage));
+#endif
+#if PROTOBUF_USE_LIGHT
+        _lm = (LightMessage *)ps_malloc(sizeof(LightMessage));
+#endif
+#if PROTOBUF_USE_MOTOR
+        _mm = (MotorboardFeedback *)ps_malloc(sizeof(MotorboardFeedback));
+        _mcm = (MotorboardControl *)ps_malloc(sizeof(MotorboardControl));
+#endif
+#if PROTOBUF_USE_SOUND_GENERATOR
+        _sgm = (SoundGeneratorMessage *)ps_malloc(sizeof(SoundGeneratorMessage));
+        _sgcm = (SoundGeneratorControlMessage *)ps_malloc(sizeof(SoundGeneratorControlMessage));
+#endif
+#if PROTOBUF_USE_DISPLAY
+        _dm = (DisplayMessage *)ps_malloc(sizeof(DisplayMessage));
+#endif
+#if PROTOBUF_USE_PERIPHERALS
+        _pm = (PeripheralsControlMessage *)ps_malloc(sizeof(PeripheralsControlMessage));
+        _pfm = (PeripheralsFeedbackMessage *)ps_malloc(sizeof(PeripheralsFeedbackMessage));
+#endif
+
+    } else {
+        DBGLOG(Error, "No PSRAM found");
+        return false;
+    }
+#else
+#if PROTOBUF_USE_BT_AUDIO
+    _bam = (BluetoothAudioMessage *)malloc(sizeof(BluetoothAudioMessage));
+    _bacm = (BluetoothAudioControlMessage *)malloc(sizeof(BluetoothAudioControlMessage));    
+#endif    
+#if PROTOBUF_USE_SYSTEM
+    _sm = (SysMessage *)malloc(sizeof(SysMessage));
+#endif
+#if PROTOBUF_USE_LIGHT
+    _lm = (LightMessage *)malloc(sizeof(LightMessage));
+#endif    
+#if PROTOBUF_USE_MOTOR
+    _mm = (MotorboardFeedback *)malloc(sizeof(MotorboardFeedback));
+    _mcm = (MotorboardControl *)malloc(sizeof(MotorboardControl));
+    #endif
+#if PROTOBUF_USE_SOUND_GENERATOR
+    _sgm = (SoundGeneratorMessage *)malloc(sizeof(SoundGeneratorMessage));
+    _sgcm = (SoundGeneratorControlMessage *)malloc(sizeof(SoundGeneratorControlMessage));
+    #   endif
+#if PROTOBUF_USE_DISPLAY
+    _dm = (DisplayMessage *)malloc(sizeof(DisplayMessage));
+    #endif
+#if PROTOBUF_USE_PERIPHERALS
+    _pm = (PeripheralsControlMessage *)malloc(sizeof(PeripheralsControlMessage));
+    _pfm = (PeripheralsFeedbackMessage *)malloc(sizeof(PeripheralsFeedbackMessage));
+    #endif
+
+#endif
+
+    DBGLOG(Warning, "Free heap: %d", ESP.getFreeHeap());
+    DBGLOG(Info, "KiSCProto init WiFi");
+    example_wifi_init();
+    DBGLOG(Warning, "Free heap: %d", ESP.getFreeHeap());
+     
+//    WiFi.disconnect();
+//    delay(100);
+    DBGLOG(Info, "Initializing ESP-Now");
 
     #ifdef ARDUINO_ARCH_ESP32
     if (esp_now_init() != ESP_OK) {
@@ -1076,6 +1177,7 @@ KiSCProto::init() {
 #endif        
         return false;
     }
+    DBGLOG(Warning, "Free heap: %d", ESP.getFreeHeap());
     #else
     if (esp_now_init() != 0) {
 #if USE_LOGGER
@@ -1101,7 +1203,7 @@ KiSCProto::init() {
 #endif
             return false;
         }
-
+    DBGLOG(Warning, "End of init() Free heap: %d", ESP.getFreeHeap());
     return true;
 }
 
