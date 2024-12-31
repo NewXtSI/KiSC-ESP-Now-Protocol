@@ -4,18 +4,54 @@
 #ifndef PB_PERIPHERALS_PB_H_INCLUDED
 #define PB_PERIPHERALS_PB_H_INCLUDED
 #include <pb.h>
+#include "remotecontrol.pb.h"
 
 #if PB_PROTO_HEADER_VERSION != 40
 #error Regenerate this file with the current version of nanopb generator.
 #endif
 
 /* Struct definitions */
+typedef struct _PedalMessage {
+    uint32_t pedalPosition;
+} PedalMessage;
+
+typedef struct _RFIDMessage {
+    bool cardpresent;
+    uint32_t cardID0;
+    uint32_t cardID1;
+    uint32_t cardID2;
+} RFIDMessage;
+
+typedef struct _RotaryEncoderMessage {
+    uint32_t encoderValue;
+    bool encoderButton;
+} RotaryEncoderMessage;
+
 typedef struct _PeripheralsFeedbackMessage {
-    char dummy_field;
+    bool has_throttle;
+    PedalMessage throttle;
+    bool has_brake;
+    PedalMessage brake;
+    int32_t steeringAngle;
+    bool has_accelerometer;
+    Accelerometer accelerometer; /* accelerometer */
+    bool has_gyroscope;
+    Gyroscope gyroscope; /* gyroscope */
+    bool btnStart;
+    bool btnIndicatorLeft;
+    bool btnIndicatorRight;
+    bool btnHorn;
+    bool btnGearUp;
+    bool btnGearDown;
+    bool btnHeadlight;
+    bool btnHighbeam;
+    bool has_rfid;
+    RFIDMessage rfid;
 } PeripheralsFeedbackMessage;
 
 typedef struct _PeripheralsControlMessage {
-    char dummy_field;
+    bool steeringActive;
+    int32_t steering;
 } PeripheralsControlMessage;
 
 
@@ -24,35 +60,111 @@ extern "C" {
 #endif
 
 /* Initializer values for message structs */
-#define PeripheralsFeedbackMessage_init_default  {0}
-#define PeripheralsControlMessage_init_default   {0}
-#define PeripheralsFeedbackMessage_init_zero     {0}
-#define PeripheralsControlMessage_init_zero      {0}
+#define PedalMessage_init_default                {0}
+#define RFIDMessage_init_default                 {0, 0, 0, 0}
+#define RotaryEncoderMessage_init_default        {0, 0}
+#define PeripheralsFeedbackMessage_init_default  {false, PedalMessage_init_default, false, PedalMessage_init_default, 0, false, Accelerometer_init_default, false, Gyroscope_init_default, 0, 0, 0, 0, 0, 0, 0, 0, false, RFIDMessage_init_default}
+#define PeripheralsControlMessage_init_default   {0, 0}
+#define PedalMessage_init_zero                   {0}
+#define RFIDMessage_init_zero                    {0, 0, 0, 0}
+#define RotaryEncoderMessage_init_zero           {0, 0}
+#define PeripheralsFeedbackMessage_init_zero     {false, PedalMessage_init_zero, false, PedalMessage_init_zero, 0, false, Accelerometer_init_zero, false, Gyroscope_init_zero, 0, 0, 0, 0, 0, 0, 0, 0, false, RFIDMessage_init_zero}
+#define PeripheralsControlMessage_init_zero      {0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
+#define PedalMessage_pedalPosition_tag           1
+#define RFIDMessage_cardpresent_tag              1
+#define RFIDMessage_cardID0_tag                  2
+#define RFIDMessage_cardID1_tag                  3
+#define RFIDMessage_cardID2_tag                  4
+#define RotaryEncoderMessage_encoderValue_tag    1
+#define RotaryEncoderMessage_encoderButton_tag   2
+#define PeripheralsFeedbackMessage_throttle_tag  1
+#define PeripheralsFeedbackMessage_brake_tag     2
+#define PeripheralsFeedbackMessage_steeringAngle_tag 3
+#define PeripheralsFeedbackMessage_accelerometer_tag 4
+#define PeripheralsFeedbackMessage_gyroscope_tag 5
+#define PeripheralsFeedbackMessage_btnStart_tag  10
+#define PeripheralsFeedbackMessage_btnIndicatorLeft_tag 11
+#define PeripheralsFeedbackMessage_btnIndicatorRight_tag 12
+#define PeripheralsFeedbackMessage_btnHorn_tag   13
+#define PeripheralsFeedbackMessage_btnGearUp_tag 14
+#define PeripheralsFeedbackMessage_btnGearDown_tag 15
+#define PeripheralsFeedbackMessage_btnHeadlight_tag 16
+#define PeripheralsFeedbackMessage_btnHighbeam_tag 17
+#define PeripheralsFeedbackMessage_rfid_tag      20
+#define PeripheralsControlMessage_steeringActive_tag 1
+#define PeripheralsControlMessage_steering_tag   2
 
 /* Struct field encoding specification for nanopb */
-#define PeripheralsFeedbackMessage_FIELDLIST(X, a) \
+#define PedalMessage_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UINT32,   pedalPosition,     1)
+#define PedalMessage_CALLBACK NULL
+#define PedalMessage_DEFAULT NULL
 
+#define RFIDMessage_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, BOOL,     cardpresent,       1) \
+X(a, STATIC,   SINGULAR, UINT32,   cardID0,           2) \
+X(a, STATIC,   SINGULAR, UINT32,   cardID1,           3) \
+X(a, STATIC,   SINGULAR, UINT32,   cardID2,           4)
+#define RFIDMessage_CALLBACK NULL
+#define RFIDMessage_DEFAULT NULL
+
+#define RotaryEncoderMessage_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UINT32,   encoderValue,      1) \
+X(a, STATIC,   SINGULAR, BOOL,     encoderButton,     2)
+#define RotaryEncoderMessage_CALLBACK NULL
+#define RotaryEncoderMessage_DEFAULT NULL
+
+#define PeripheralsFeedbackMessage_FIELDLIST(X, a) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  throttle,          1) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  brake,             2) \
+X(a, STATIC,   SINGULAR, INT32,    steeringAngle,     3) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  accelerometer,     4) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  gyroscope,         5) \
+X(a, STATIC,   SINGULAR, BOOL,     btnStart,         10) \
+X(a, STATIC,   SINGULAR, BOOL,     btnIndicatorLeft,  11) \
+X(a, STATIC,   SINGULAR, BOOL,     btnIndicatorRight,  12) \
+X(a, STATIC,   SINGULAR, BOOL,     btnHorn,          13) \
+X(a, STATIC,   SINGULAR, BOOL,     btnGearUp,        14) \
+X(a, STATIC,   SINGULAR, BOOL,     btnGearDown,      15) \
+X(a, STATIC,   SINGULAR, BOOL,     btnHeadlight,     16) \
+X(a, STATIC,   SINGULAR, BOOL,     btnHighbeam,      17) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  rfid,             20)
 #define PeripheralsFeedbackMessage_CALLBACK NULL
 #define PeripheralsFeedbackMessage_DEFAULT NULL
+#define PeripheralsFeedbackMessage_throttle_MSGTYPE PedalMessage
+#define PeripheralsFeedbackMessage_brake_MSGTYPE PedalMessage
+#define PeripheralsFeedbackMessage_accelerometer_MSGTYPE Accelerometer
+#define PeripheralsFeedbackMessage_gyroscope_MSGTYPE Gyroscope
+#define PeripheralsFeedbackMessage_rfid_MSGTYPE RFIDMessage
 
 #define PeripheralsControlMessage_FIELDLIST(X, a) \
-
+X(a, STATIC,   SINGULAR, BOOL,     steeringActive,    1) \
+X(a, STATIC,   SINGULAR, INT32,    steering,          2)
 #define PeripheralsControlMessage_CALLBACK NULL
 #define PeripheralsControlMessage_DEFAULT NULL
 
+extern const pb_msgdesc_t PedalMessage_msg;
+extern const pb_msgdesc_t RFIDMessage_msg;
+extern const pb_msgdesc_t RotaryEncoderMessage_msg;
 extern const pb_msgdesc_t PeripheralsFeedbackMessage_msg;
 extern const pb_msgdesc_t PeripheralsControlMessage_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
+#define PedalMessage_fields &PedalMessage_msg
+#define RFIDMessage_fields &RFIDMessage_msg
+#define RotaryEncoderMessage_fields &RotaryEncoderMessage_msg
 #define PeripheralsFeedbackMessage_fields &PeripheralsFeedbackMessage_msg
 #define PeripheralsControlMessage_fields &PeripheralsControlMessage_msg
 
 /* Maximum encoded size of messages (where known) */
 #define PERIPHERALS_PB_H_MAX_SIZE                PeripheralsFeedbackMessage_size
-#define PeripheralsControlMessage_size           0
-#define PeripheralsFeedbackMessage_size          0
+#define PedalMessage_size                        6
+#define PeripheralsControlMessage_size           13
+#define PeripheralsFeedbackMessage_size          108
+#define RFIDMessage_size                         20
+#define RotaryEncoderMessage_size                8
 
 #ifdef __cplusplus
 } /* extern "C" */
