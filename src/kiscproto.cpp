@@ -325,6 +325,13 @@ size_t KiSCProto::encodeBluetoothAudioMessage(BluetoothAudioMessage bam, char *a
 size_t KiSCProto::encodeBluetoothAudioMessage(BluetoothAudioMessage bam) {
     DBGLOG(Verbose, "Encoding Bluetooth Audio Message");
     pb_ostream_t stream = pb_ostream_from_buffer(send_buffer+1, sizeof(send_buffer)-1);
+    bam.bta.funcs.encode = nullptr;
+    bam.bts.funcs.encode = nullptr;
+    bam.btalbum.funcs.encode = nullptr;
+    bam.bta.arg = nullptr;
+    bam.bts.arg = nullptr;
+    bam.btalbum.arg = nullptr;
+
     bool status = pb_encode(&stream, BluetoothAudioMessage_fields, &bam);
     send_buffer[0] = MSG_TYPE_BLUETOOTH_AUDIO_MESSAGE;
     #ifndef ARDUINO_ARCH_ESP32
